@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sprout, TrendingUp, DollarSign, Package, AlertCircle, ShoppingCart, Info, ChevronDown } from 'lucide-react';
+import { Sprout, TrendingUp, DollarSign, Package, AlertCircle, ShoppingCart, Info, ChevronDown, ArrowRight, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 import { 
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -9,6 +10,7 @@ import {
 
 const Dashboard = () => {
     const { t } = useLanguage();
+    const navigate = useNavigate();
     const [crops, setCrops] = React.useState([]);
     const [orders, setOrders] = React.useState([]);
     const [loading, setLoading] = React.useState(true);
@@ -16,6 +18,8 @@ const Dashboard = () => {
     const [showYearDropdown, setShowYearDropdown] = React.useState(false);
     const [selectedMonth, setSelectedMonth] = React.useState('March');
     const [selectedYear, setSelectedYear] = React.useState('2025');
+    const [marketTrends, setMarketTrends] = React.useState([]);
+    const [location, setLocation] = React.useState('Coimbatore, Tamil Nadu');
 
     const monthRef = React.useRef(null);
     const yearRef = React.useRef(null);
@@ -37,14 +41,17 @@ const Dashboard = () => {
             try {
                 const userId = localStorage.getItem('userId');
                 if (!userId || userId === 'null') return;
-                const [cropRes, orderRes] = await Promise.all([
+                const [cropRes, orderRes, demandRes] = await Promise.all([
                     fetch(`http://localhost:5000/api/crops/${userId}`),
-                    fetch(`http://localhost:5000/api/orders/farmer/${userId}`)
+                    fetch(`http://localhost:5000/api/orders/farmer/${userId}`),
+                    fetch(`http://localhost:5000/api/orders/demand/regional`)
                 ]);
                 const cropsData = await cropRes.json();
                 const ordersData = await orderRes.json();
+                const demandData = await demandRes.json();
                 setCrops(Array.isArray(cropsData) ? cropsData : []);
                 setOrders(Array.isArray(ordersData) ? ordersData : []);
+                setMarketTrends(demandData.slice(0, 3));
             } catch (error) {
                 console.error('Error fetching dashboard data:', error);
             } finally {
@@ -304,24 +311,33 @@ const Dashboard = () => {
                     className="section-card weather-widget"
                 >
                     <div className="section-header">
-                        <h2>{t.farmConditions || 'Farm Conditions'}</h2>
-                        <Info size={16} color="#718096" />
+                        <h2>{t.farmConditions || 'Market Trends'}</h2>
+                        <TrendingUp size={16} color="#48bb78" />
                     </div>
-                    <div className="weather-main">
-                        <span className="temp">28°C</span>
-                        <span className="condition">Sunny & Clear</span>
-                    </div>
-                    <div className="soil-stats">
-                        <div className="soil-stat">
-                            <span>Soil Moisture</span>
-                            <div className="progress-bar">
-                                <div className="progress" style={{ width: '65%' }}></div>
+                    
+                    <div className="market-trends-list">
+                        {marketTrends.length > 0 ? marketTrends.map((trend, i) => (
+                            <div key={i} className="trend-row" onClick={() => navigate('/farmer/seasonal')}>
+                                <div className="trend-name">
+                                    <span className="crop-label">{trend.crop}</span>
+                                    <span className="loc-label">{trend.primaryLocation}</span>
+                                </div>
+                                <div className="trend-value">
+                                    <span className="q-val">+{trend.quantity}</span>
+                                    <ArrowRight size={12} />
+                                </div>
                             </div>
-                        </div>
-                        <div className="soil-stat">
-                            <span>Soil pH</span>
-                            <span className="ph-value">6.5 pH (Optimal)</span>
-                        </div>
+                        )) : (
+                            <div className="empty-trends">
+                                <Info size={24} />
+                                <p>No market trends available yet.</p>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="advisor-promo" onClick={() => navigate('/farmer/seasonal')}>
+                        <Sparkles size={16} />
+                        <span>AI Suggestion: Plant {marketTrends[0]?.crop || 'Onion'} for max profit</span>
                     </div>
                 </motion.div>
             </div>
@@ -531,6 +547,26 @@ const Dashboard = () => {
                 .recharts-tooltip-cursor {
                     fill: #f8fafc;
                 }
+                
+                .market-trends-list { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; }
+                .trend-row { 
+                    display: flex; justify-content: space-between; align-items: center; 
+                    padding: 12px; background: #f8fafc; border-radius: 12px; cursor: pointer; transition: all 0.2s;
+                }
+                .trend-row:hover { background: #f0fff4; transform: translateX(5px); }
+                .trend-name { display: flex; flex-direction: column; text-align: left; }
+                .crop-label { font-weight: 700; color: #2d3748; font-size: 0.9rem; }
+                .loc-label { font-size: 0.72rem; color: #a0aec0; }
+                .trend-value { display: flex; align-items: center; gap: 8px; color: var(--primary); font-weight: 800; }
+                .q-val { font-size: 0.85rem; }
+                
+                .advisor-promo { 
+                    margin-top: 24px; padding: 14px; background: #2d6a4f; color: white; 
+                    border-radius: 12px; font-size: 0.8rem; font-weight: 700; 
+                    display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;
+                }
+                .advisor-promo:hover { transform: scale(1.02); box-shadow: 0 4px 12px rgba(45,106,79,0.3); }
+                .empty-trends { padding: 20px; text-align: center; color: #a0aec0; font-size: 0.85rem; }
                 `}
             </style>
         </div>

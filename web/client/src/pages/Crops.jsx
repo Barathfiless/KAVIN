@@ -29,6 +29,19 @@ const Crops = () => {
 
     useEffect(() => {
         fetchCrops();
+        
+        // Check for prefilled crop from Seasonal Advisor
+        const prefill = localStorage.getItem('prefillCrop');
+        if (prefill) {
+            try {
+                const cropData = JSON.parse(prefill);
+                setNewCrop(prev => ({ ...prev, ...cropData }));
+                setShowModal(true);
+                localStorage.removeItem('prefillCrop');
+            } catch (e) {
+                console.error("Prefill failed:", e);
+            }
+        }
     }, []);
 
     // Close filter dropdown on outside click

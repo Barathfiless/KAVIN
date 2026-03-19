@@ -69,4 +69,28 @@ router.put('/:id/status', async (req, res) => {
     }
 });
 
+// Get market demand analytics (Farmer)
+router.get('/demand/regional', async (req, res) => {
+    try {
+        const data = await Order.aggregate([
+            { $match: { status: { $ne: 'Cancelled' } } },
+            { $group: {
+                _id: { crop: '$cropName' },
+                count: { $sum: 1 },
+                totalQty: { $sum: '$quantity' },
+                locations: { $addToSet: '$address' }
+            }},
+            { $sort: { totalQty: -1 } }
+        ]);
+        res.json(data.map(d => ({
+            crop: d._id.crop,
+            orders: d.count,
+            quantity: d.totalQty,
+            primaryLocation: d.locations[0] || 'Unknown'
+        })));
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 module.exports = router;

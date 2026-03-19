@@ -80,7 +80,7 @@ const Sidebar = () => {
                     position: fixed;
                     left: 0;
                     top: 0;
-                    z-index: 100;
+                    z-index: 1200;
                     box-shadow: 4px 0 10px rgba(0,0,0,0.1);
                 }
                 .sidebar-header {

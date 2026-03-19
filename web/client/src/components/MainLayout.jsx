@@ -15,7 +15,9 @@ const MainLayout = () => {
         <div className="layout-wrapper">
             <Sidebar />
             <main className="main-content">
-                <Header />
+                <div className="header-wrapper-fixed">
+                    <Header />
+                </div>
                 <div className="page-container">
                     <Outlet />
                 </div>
@@ -24,18 +26,26 @@ const MainLayout = () => {
             <style>
                 {`
                 .layout-wrapper {
-                    display: flex;
                     min-height: 100vh;
                     background: #f8fafc;
                 }
                 .main-content {
-                    flex: 1;
-                    margin-left: 260px; /* Width of Sidebar */
+                    padding-left: 260px; /* Width of Sidebar */
+                    min-height: 100vh;
                     display: flex;
                     flex-direction: column;
                 }
+                .header-wrapper-fixed {
+                    position: fixed;
+                    top: 0;
+                    right: 0;
+                    left: 260px;
+                    z-index: 1100;
+                    background: white;
+                }
                 .page-container {
                     padding: 30px;
+                    padding-top: 100px; /* Header height + gap */
                     flex: 1;
                 }
                 `}

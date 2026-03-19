@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CloudSun, MapPin, Wind, Droplets, Thermometer, CheckCircle2, AlertTriangle, Sprout, RefreshCw, Leaf, Info, Search, X, Navigation, ChevronDown, ChevronUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { CloudSun, MapPin, Wind, Droplets, Thermometer, CheckCircle2, AlertTriangle, Sprout, RefreshCw, Leaf, Info, Search, X, Navigation, ChevronDown, ChevronUp, TrendingUp, ShoppingBag, Sparkles, Map as MapIcon, ArrowRight, Plus, Package } from 'lucide-react';
 
 // ─── Comprehensive India Crop Engine ───────────────────────────────────────────
 const CROP_DB = [
@@ -105,12 +106,15 @@ const SOIL_INFO = {
 };
 
 const Seasonal = () => {
+    const navigate = useNavigate();
     const [step, setStep] = useState('idle');
     const [locationName, setLocationName] = useState('');
     const [weather, setWeather] = useState(null);
     const [soilType, setSoilType] = useState('alluvial');
     const [recommendations, setRecommendations] = useState([]);
     const [season, setSeason] = useState('');
+    const [marketDemand, setMarketDemand] = useState([]);
+    const [activeTab, setActiveTab] = useState('advisor'); // 'advisor' | 'demand'
 
     const [showModal, setShowModal] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
@@ -123,6 +127,20 @@ const Seasonal = () => {
     const debounceRef = useRef(null);
 
     const soilTypes = Object.entries(SOIL_INFO);
+
+    useEffect(() => {
+        fetchMarketDemand();
+    }, []);
+
+    const fetchMarketDemand = async () => {
+        try {
+            const res = await fetch('http://localhost:5000/api/orders/demand/regional');
+            const data = await res.json();
+            setMarketDemand(data);
+        } catch (err) {
+            console.error("Failed to fetch demand:", err);
+        }
+    };
 
     const handleSearchInput = (val) => {
         setSearchQuery(val);
@@ -148,6 +166,14 @@ const Seasonal = () => {
                 setSearchStatus('error');
             }
         }, 500);
+    };
+
+    const handleSelectResult = (r) => {
+        const lat = parseFloat(r.lat);
+        const lon = parseFloat(r.lon);
+        const label = r.address.city || r.address.town || r.address.village || r.display_name.split(',')[0];
+        const fullLabel = `${label}, ${r.address.state}`;
+        fetchWeatherAndAnalyze(lat, lon, fullLabel);
     };
 
     const fetchWeatherAndAnalyze = async (lat, lon, locLabel) => {
@@ -220,6 +246,17 @@ const Seasonal = () => {
         } finally {
             setAnalyzingCrop(null);
         }
+    };
+
+    const handlePlantThis = (crop) => {
+        // Navigate to Crops page with pre-filled state (via localStorage or state management)
+        // For simplicity, we'll store it in localStorage and use it in Crops.jsx
+        localStorage.setItem('prefillCrop', JSON.stringify({
+            name: crop.name,
+            variety: 'Standard',
+            status: 'Growing'
+        }));
+        navigate('/farmer/crops'); // SPA redirect
     };
 
     return (
@@ -300,10 +337,18 @@ const Seasonal = () => {
                     </div>
                 </div>
 
-                <div className="action-group">
+                <div className="action-group" style={{ display: 'flex', gap: '12px' }}>
+                    <div className="tab-switcher">
+                        <button className={`tab-btn ${activeTab === 'advisor' ? 'active' : ''}`} onClick={() => setActiveTab('advisor')}>
+                            <Sprout size={16} /> Advisor
+                        </button>
+                        <button className={`tab-btn ${activeTab === 'demand' ? 'active' : ''}`} onClick={() => setActiveTab('demand')}>
+                            <TrendingUp size={16} /> Market Demand
+                        </button>
+                    </div>
                     <button className={`btn-primary ${step === 'fetching' ? 'btn-loading' : ''} analyze-btn`} onClick={() => setShowModal(true)}>
-                        {step === 'fetching' ? <RefreshCw className="spin-icon" size={20} /> : <Sprout size={20} />}
-                        <span>{step === 'fetching' ? 'Fetching…' : 'Analyze'}</span>
+                        {step === 'fetching' ? <RefreshCw className="spin-icon" size={20} /> : <Search size={20} />}
+                        <span>{step === 'fetching' ? 'Fetching…' : 'Check Climate'}</span>
                     </button>
                 </div>
 
@@ -321,82 +366,137 @@ const Seasonal = () => {
                 )}
             </div>
 
-            <div className={`seasonal-main-layout ${step === 'idle' ? 'centered-idle' : 'split-view'}`}>
-                {step === 'done' && (
-                    <div className="side-panel">
-                        <section className="section-block season-list-section">
-                            <h3 className="section-title"><CloudSun size={18} /> Indian Seasons</h3>
-                            <div className="seasons-vertical-list">
-                                {[
-                                    { id: 'Kharif', name: 'Kharif', period: 'Jun - Oct', icon: <Droplets size={16} /> },
-                                    { id: 'Rabi', name: 'Rabi', period: 'Nov - Feb', icon: <Thermometer size={16} /> },
-                                    { id: 'Zaid', name: 'Zaid', period: 'Mar - May', icon: <CloudSun size={16} /> }
-                                ].map((s) => (
-                                    <div key={s.id} className={`season-list-item ${season === s.id ? 'active' : ''}`}>
-                                        <div className="s-icon">{s.icon}</div>
-                                        <div className="s-info"><div className="s-name">{s.name}</div><div className="s-period">{s.period}</div></div>
-                                        {season === s.id && <div className="current-indicator">Current</div>}
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    </div>
-                )}
+            <div className="seasonal-main-layout">
 
                 <div className="results-panel" style={{ display: 'flex', flexDirection: 'column' }}>
-                    {step === 'done' && recommendations.length > 0 ? (
-                        <motion.section className="section-block results-section" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                    {activeTab === 'advisor' ? (
+                        <>
+                            {step === 'done' && recommendations.length > 0 ? (() => {
+                                const hasDemand = recommendations.some(crop => marketDemand.some(d => d.crop.toLowerCase() === crop.name.toLowerCase()));
+                                return (
+                                    <motion.div 
+                                        className={`advisor-results-split ${!hasDemand ? 'no-demand' : ''}`} 
+                                        initial={{ opacity: 0, y: 20 }} 
+                                        animate={{ opacity: 1, y: 0 }}
+                                    >
+                                        {/* Sub-section 1: High Demand Items */}
+                                        {hasDemand && (
+                                            <section className="section-block results-section demand-highlights">
+                                            <div className="results-header">
+                                                <h3 className="section-title"><TrendingUp size={18} style={{ color: '#e53e3e' }} /> High Market Demand</h3>
+                                            </div>
+                                            <div className="crop-results-scroll">
+                                                {recommendations
+                                                    .filter(crop => marketDemand.some(d => d.crop.toLowerCase() === crop.name.toLowerCase()))
+                                                    .map((crop, i) => (
+                                                        <div key={crop.name + '-demand'} className="crop-row-card demand-highlight-card">
+                                                            <div className="crop-row-rank">{i + 1}</div>
+                                                            <div className="crop-row-info">
+                                                                <div className="crop-row-name-row">
+                                                                    <div className="crop-row-name">{crop.name}</div>
+                                                                    <span className={`tier-badge tier-${crop.tier?.toLowerCase()}`}>{crop.tier}</span>
+                                                                    <span className="hot-badge"><TrendingUp size={10} /> High Demand</span>
+                                                                </div>
+                                                                <div className="crop-row-meta"><span>{crop.waterNeeds} Water</span><span className="dot"></span><span>{crop.duration}</span></div>
+                                                            </div>
+                                                            <div className="crop-row-score">
+                                                                <div className="score-label">{crop.score}% Match</div>
+                                                                <div className="score-bar-mini">
+                                                                    <div className="score-fill-mini" style={{ width: `${crop.score}%`, background: crop.tier === 'Excellent' ? '#2f855a' : crop.tier === 'Good' ? '#d69e2e' : '#dd6b20' }}></div>
+                                                                </div>
+                                                            </div>
+                                                            <div className="crop-row-actions">
+                                                                <button className="ai-insight-btn" onClick={() => handlePlantThis(crop)} title="Add to my listings"><Plus size={14} /> <span>Plant This</span></button>
+                                                                <button className="ai-insight-btn secondary" onClick={() => handleGetAIAnalysis(crop)} disabled={analyzingCrop === crop.name}>
+                                                                    {analyzingCrop === crop.name ? <RefreshCw size={14} className="spin-icon" /> : <Sparkles size={14} />}
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))
+                                                }
+                                            </div>
+                                        </section>
+                                    )}
+
+                                    {/* Sub-section 2: All matches */}
+                                    <section className="section-block results-section all-matches">
+                                        <div className="results-header">
+                                            <h3 className="section-title"><CheckCircle2 size={18} /> All Climate Matches</h3>
+                                        </div>
+                                        <div className="crop-results-scroll">
+                                            {recommendations
+                                                .filter(crop => !marketDemand.some(d => d.crop.toLowerCase() === crop.name.toLowerCase()))
+                                                .map((crop, i) => {
+                                                    return (
+                                                        <div key={crop.name} className="crop-row-card">
+                                                        <div className="crop-row-rank">{i + 1}</div>
+                                                        <div className="crop-row-info">
+                                                            <div className="crop-row-name-row">
+                                                                <div className="crop-row-name">{crop.name}</div>
+                                                                <span className={`tier-badge tier-${crop.tier?.toLowerCase()}`}>{crop.tier}</span>
+                                                            </div>
+                                                            <div className="crop-row-meta"><span>{crop.waterNeeds} Water</span><span className="dot"></span><span>{crop.duration}</span></div>
+                                                        </div>
+                                                        <div className="crop-row-score">
+                                                            <div className="score-label">{crop.score}% Match</div>
+                                                            <div className="score-bar-mini">
+                                                                <div className="score-fill-mini" style={{ width: `${crop.score}%`, background: crop.tier === 'Excellent' ? '#2f855a' : crop.tier === 'Good' ? '#d69e2e' : '#dd6b20' }}></div>
+                                                            </div>
+                                                        </div>
+                                                        <div className="crop-row-actions">
+                                                            <button className="ai-insight-btn" onClick={() => handlePlantThis(crop)} title="Add to my listings"><Plus size={14} /> <span>Plant This</span></button>
+                                                            <button className="ai-insight-btn secondary" onClick={() => handleGetAIAnalysis(crop)} disabled={analyzingCrop === crop.name}>
+                                                                    {analyzingCrop === crop.name ? <RefreshCw size={14} className="spin-icon" /> : <Sparkles size={14} />}
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </section>
+                                </motion.div>
+                            );
+                        })() : null}
+                        </>
+                    ) : (
+                        <motion.section className="section-block demand-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             <div className="results-header">
-                                <h3 className="section-title"><CheckCircle2 size={18} /> Recommendations ({recommendations.length})</h3>
+                                <h3 className="section-title"><ShoppingBag size={18} /> Real-time Market Demand</h3>
+                                <p style={{ fontSize: '0.8rem', color: '#718096' }}>Derived from current customer orders across regions</p>
                             </div>
-                            <div className="crop-results-scroll">
-                                {recommendations.map((crop, i) => (
-                                    <div key={crop.name} className="crop-row-card">
-                                        <div className="crop-row-rank">{i + 1}</div>
-                                        <div className="crop-row-info">
-                                            <div className="crop-row-name-row">
-                                                <div className="crop-row-name">{crop.name}</div>
-                                                <span className={`tier-badge tier-${crop.tier?.toLowerCase()}`}>{crop.tier}</span>
-                                            </div>
-                                            <div className="crop-row-meta"><span>{crop.waterNeeds} Water</span><span className="dot"></span><span>{crop.duration}</span></div>
+                            <div className="demand-grid">
+                                {marketDemand.length > 0 ? marketDemand.map((item, idx) => (
+                                    <div key={idx} className="demand-card">
+                                        <div className="demand-card-header">
+                                            <h4>{item.crop}</h4>
+                                            <span className="orders-pill">{item.orders} Orders</span>
                                         </div>
-                                        <div className="crop-row-score">
-                                            <div className="score-label">{crop.score}% Match</div>
-                                            <div className="score-bar-mini">
-                                                <div className="score-fill-mini" style={{ width: `${crop.score}%`, background: crop.tier === 'Excellent' ? '#2f855a' : crop.tier === 'Good' ? '#d69e2e' : '#dd6b20' }}></div>
+                                        <div className="demand-stats">
+                                            <div className="d-stat">
+                                                <Package size={14} />
+                                                <span>{item.quantity} units requested</span>
+                                            </div>
+                                            <div className="d-stat">
+                                                <MapPin size={14} />
+                                                <span className="loc-text">{item.primaryLocation}</span>
                                             </div>
                                         </div>
-                                        <div className="crop-row-ai">
-                                            <button 
-                                                className="ai-insight-btn"
-                                                onClick={() => handleGetAIAnalysis(crop)}
-                                                disabled={analyzingCrop === crop.name}
-                                            >
-                                                {analyzingCrop === crop.name ? <RefreshCw size={14} className="spin-icon" /> : <Sparkles size={14} />}
-                                                <span>AI Insights</span>
+                                        <div className="demand-footer">
+                                            <button className="go-btn" onClick={() => { setSearchQuery(item.crop); setActiveTab('advisor'); }}>
+                                                Check Cultivation <ArrowRight size={14} />
                                             </button>
                                         </div>
                                     </div>
-                                ))}
+                                )) : (
+                                    <div className="results-empty-centered">
+                                        <ShoppingBag size={48} className="idle-icon" />
+                                        <h3>No Demand Data Yet</h3>
+                                        <p>Market demand will appear here once customers start placing orders.</p>
+                                    </div>
+                                )}
                             </div>
                         </motion.section>
-                    ) : step === 'done' && recommendations.length === 0 ? (
-                        <div className="results-empty-centered">
-                            <Leaf size={48} className="idle-icon" />
-                            <h3>No Matches Found</h3>
-                            <p>No crops suitable for <strong>{SOIL_INFO[soilType]?.name}</strong> soil during <strong>{season}</strong> season at current conditions. Try a different soil type.</p>
-                        </div>
-                    ) : step === 'idle' ? (
-                        <div className="results-idle">
-                            <Sprout size={48} className="idle-icon" />
-                            <h3>Analysis Results</h3>
-                            <p>Pick your soil type and click "Analyze" to get crop recommendations.</p>
-                        </div>
-                    ) : step === 'fetching' ? (
-                        <div className="results-idle"><RefreshCw size={48} className="idle-icon spin-icon" /><p>Fetching real-time climate data…</p></div>
-                    ) : step === 'error' ? (
-                        <div className="results-idle"><AlertTriangle size={48} className="idle-icon" /><p>Failed to fetch weather data. Please check your connection and try again.</p></div>
-                    ) : null}
+                    )}
 
                     <AnimatePresence>
                         {selectedAnalysis && (
@@ -451,6 +551,11 @@ const Seasonal = () => {
                     border-radius: 24px; 
                     border: 1px solid #edf2f7;
                     box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+                    position: sticky;
+                    top: 75px;
+                    z-index: 1000;
+                    background: #ffffff;
+                    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
                 }
                 
                 .horizontal-control-block { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
@@ -477,16 +582,19 @@ const Seasonal = () => {
                 .h-stat { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; font-weight: 700; color: #4a5568; }
                 .h-stat svg { color: var(--primary); }
 
-                /* AI Column */
-                .crop-row-ai { width: 140px; text-align: right; }
+                /* Action Buttons Alignment */
+                .crop-row-actions { display: flex; align-items: center; gap: 8px; justify-content: flex-end; width: 180px; }
                 .ai-insight-btn { 
                     display: flex; align-items: center; gap: 8px; 
                     background: #f0fff4; color: #2d6a4f; border: 1.5px solid #c6f6d5;
                     padding: 8px 14px; border-radius: 10px; font-size: 0.8rem; font-weight: 700;
                     cursor: pointer; transition: all 0.2s; white-space: nowrap;
+                    height: 38px;
                 }
                 .ai-insight-btn:hover:not(:disabled) { background: #2d6a4f; color: white; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(45,106,79,0.2); }
                 .ai-insight-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+                .ai-insight-btn.secondary { background: white; border: 1px solid #edf2f7; color: #718096; width: 38px; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
+                .ai-insight-btn.secondary:hover { background: #f8fafc; color: var(--primary); border-color: var(--primary); }
 
                 /* AI Modal */
                 .ai-analysis-modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 3000; padding: 20px; }
@@ -503,44 +611,95 @@ const Seasonal = () => {
                 .confidence-pill { background: #2d6a4f; color: white; padding: 4px 12px; border-radius: 10px; font-weight: 800; }
                 .ai-modal-footer { padding: 20px 30px; background: #f8fafc; border-top: 1px solid #edf2f7; font-size: 0.75rem; color: #a0aec0; text-align: center; }
 
-                .seasonal-main-layout { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; }
-                .seasonal-main-layout.split-view { grid-template-columns: 280px 1fr; }
-                .centered-idle .results-panel { display: flex; align-items: center; justify-content: center; }
-
-                .season-list-section { padding: 20px; }
-                .seasons-vertical-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
-                .season-list-item { 
-                    display: flex; align-items: center; gap: 12px; padding: 12px; 
-                    border-radius: 12px; background: #f8fafc; border: 1px solid #edf2f7;
-                    position: relative; transition: all 0.2s;
+                .tab-switcher { display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; gap: 4px; }
+                .tab-btn { 
+                    display: flex; align-items: center; gap: 8px; padding: 8px 16px; 
+                    border: none; background: transparent; border-radius: 9px; 
+                    font-size: 0.85rem; font-weight: 700; color: #64748b; cursor: pointer; transition: all 0.2s;
                 }
-                .season-list-item.active { background: #f0fff4; border-color: var(--primary); }
-                .s-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 8px; color: var(--primary); }
-                .s-name { font-weight: 700; font-size: 0.9rem; }
-                .current-indicator { position: absolute; right: 10px; top: 10px; background: var(--primary); color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 10px; }
+                .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-                .section-block { background: white; border-radius: 20px; border: 1px solid #edf2f7; padding: 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-                .results-header { margin-bottom: 20px; }
+                .hot-badge { background: #fff5f5; color: #e53e3e; font-size: 0.65rem; padding: 4px 10px; border-radius: 20px; font-weight: 800; display: flex; align-items: center; gap: 4px; border: 1px solid #fed7d7; white-space: nowrap; flex-shrink: 0; }
+
+                /* Demand UI */
+                .demand-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 10px; }
+                .demand-card { background: white; border: 1px solid #edf2f7; border-radius: 20px; padding: 20px; transition: all 0.3s; }
+                .demand-card:hover { transform: translateY(-4px); box-shadow: 0 10px 25px rgba(0,0,0,0.05); border-color: var(--primary); }
+                .demand-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+                .demand-card-header h4 { margin: 0; font-size: 1.1rem; color: #1a202c; }
+                .orders-pill { background: #ebf8ff; color: #2b6cb0; font-size: 0.75rem; padding: 4px 10px; border-radius: 12px; font-weight: 800; }
+                .demand-stats { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+                .d-stat { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #4a5568; }
+                .d-stat svg { color: #a0aec0; }
+                .section-subtitle { font-size: 0.8rem; color: #718096; margin-top: 4px; }
+                .demand-footer { border-top: 1px solid #f1f5f9; padding-top: 15px; }
+                .go-btn { width: 100%; padding: 10px; border-radius: 10px; border: none; background: #f0fff4; color: #2d6a4f; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
+                .go-btn:hover { background: #2d6a4f; color: white; }
+                .advisor-results-split { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: stretch; max-width: 1550px; margin: 0 auto; width: 100%; }
+                .advisor-results-split.no-demand { grid-template-columns: 1fr; max-width: 850px; margin: 0 auto; width: 100%; }
+                
+                @media (max-width: 1450px) {
+                    .advisor-results-split { grid-template-columns: 1fr; max-width: 850px; }
+                }
+
+                .section-block { background: white; border-radius: 20px; border: 1px solid #edf2f7; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
+                .results-header { margin-bottom: 20px; min-height: 32px; display: flex; align-items: center; }
+                .results-section { min-height: 100%; display: flex; flex-direction: column; height: 100%; }
+                .crop-results-scroll { 
+                    flex: 1; 
+                    max-height: 520px; 
+                    overflow-y: auto; 
+                    padding-right: 8px;
+                }
+                .crop-results-scroll::-webkit-scrollbar { width: 6px; }
+                .crop-results-scroll::-webkit-scrollbar-track { background: transparent; }
+                .crop-results-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+                .crop-results-scroll::-webkit-scrollbar-thumb:hover { background: #cbd5e0; }
+
+                .demand-highlights { border-top: 4px solid #e53e3e; }
+                .demand-highlight-card { border-color: #fed7e2; background: #fffafb; }
+                .demand-highlight-card:hover { border-color: #f687b3; }
+                .all-matches { border-top: 4px solid var(--primary); }
+
+                .seasonal-main-layout { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; }
+
                 .crop-row-card { 
-                    display: flex; align-items: center; gap: 16px; padding: 16px; 
-                    border-radius: 12px; border: 1px solid #edf2f7; margin-bottom: 12px;
+                    display: grid;
+                    grid-template-columns: 24px 1fr 85px 125px 38px;
+                    align-items: center; 
+                    gap: 14px; 
+                    padding: 12px 16px; 
+                    border-radius: 14px; border: 1px solid #edf2f7; margin-bottom: 10px;
                     transition: all 0.2s;
                 }
                 .crop-row-card:hover { transform: translateY(-2px); border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-                .crop-row-rank { font-weight: 800; color: #cbd5e0; width: 24px; text-align: center; }
-                .crop-row-info { flex: 1; }
-                .crop-row-name-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-                .crop-row-name { font-weight: 700; color: #2d3748; }
-                .tier-badge { font-size: 0.6rem; padding: 2px 8px; border-radius: 10px; font-weight: 800; }
+                .crop-row-rank { font-weight: 800; color: #cbd5e0; text-align: center; font-size: 0.95rem; }
+                .crop-row-info { min-width: 0; }
+                .crop-row-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
+                .crop-row-name { font-weight: 700; color: #2d3748; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .tier-badge { font-size: 0.6rem; padding: 2px 7px; border-radius: 8px; font-weight: 800; white-space: nowrap; }
                 .tier-excellent { background: #c6f6d5; color: #22543d; }
                 .tier-good { background: #fefcbf; color: #744210; }
                 .tier-fair { background: #fed7aa; color: #7b341e; }
-                .crop-row-meta { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: #718096; }
-                .dot { width: 3px; height: 3px; background: #cbd5e0; border-radius: 50%; }
-                .crop-row-score { width: 120px; text-align: right; }
-                .score-label { font-size: 0.8rem; font-weight: 700; margin-bottom: 4px; }
-                .score-bar-mini { height: 4px; background: #edf2f7; border-radius: 2px; overflow: hidden; }
+                .crop-row-meta { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #718096; white-space: nowrap; overflow: hidden; }
+                .dot { width: 3px; height: 3px; background: #cbd5e0; border-radius: 50%; flex-shrink: 0; }
+                .crop-row-score { text-align: right; }
+                .score-label { font-size: 0.8rem; font-weight: 800; margin-bottom: 4px; white-space: nowrap; color: var(--primary-dark); }
+                .score-bar-mini { height: 4px; background: #edf2f7; border-radius: 2px; overflow: hidden; width: 100%; }
                 .score-fill-mini { height: 100%; transition: width 0.5s; }
+                .crop-row-actions { display: flex; justify-content: flex-end; }
+                .ai-insight-btn { 
+                    display: flex; align-items: center; gap: 6px; 
+                    background: #f0fff4; color: #2d6a4f; border: 1.5px solid #c6f6d5;
+                    padding: 0 12px; border-radius: 10px; font-size: 0.75rem; font-weight: 700;
+                    cursor: pointer; transition: all 0.2s; white-space: nowrap;
+                    height: 36px;
+                    width: 100%; justify-content: center;
+                }
+                .ai-insight-btn:hover:not(:disabled) { background: #2d6a4f; color: white; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(45,106,79,0.2); }
+                .ai-insight-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+                .ai-insight-btn.secondary { background: white; border: 1px solid #edf2f7; color: #718096; width: 36px; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
+                .ai-insight-btn.secondary:hover { background: #f8fafc; color: var(--primary); border-color: var(--primary); }
 
                 .results-panel { min-height: 400px; }
                 .results-empty-centered {
