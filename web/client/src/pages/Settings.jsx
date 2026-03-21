@@ -1,17 +1,51 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
     User, Bell, Shield, Globe, 
     CreditCard, Smartphone, LogOut
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { languages } from '../utils/translations';
+import { useLocation } from 'react-router-dom';
 
 const Settings = () => {
     const { currentLang, setCurrentLang, t } = useLanguage();
+    const location = useLocation();
+    const portalMode = location.pathname.startsWith('/customer') ? 'customer' : 'farmer';
+    
+    const [isEditing, setIsEditing] = useState(false);
+    const [editData, setEditData] = useState({ 
+        name: localStorage.getItem('userName') || 'Farmer', 
+        phone: localStorage.getItem('userPhone') || '+91 00000 00000' 
+    });
+    const [isSaving, setIsSaving] = useState(false);
+
+    const handleSave = async () => {
+        setIsSaving(true);
+        try {
+            const userId = localStorage.getItem('userId');
+            const res = await fetch(`http://localhost:5000/api/auth/profile/${userId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(editData)
+            });
+            if (res.ok) {
+                const data = await res.json();
+                localStorage.setItem('userName', data.user.name);
+                localStorage.setItem('userPhone', data.user.phone);
+                setIsEditing(false);
+            } else {
+                alert('Failed to save profile');
+            }
+        } catch (err) {
+            console.error(err);
+        }
+        setIsSaving(false);
+    };
+    
     const user = {
         name: localStorage.getItem('userName') || 'Farmer',
         phone: localStorage.getItem('userPhone') || '+91 00000 00000',
-        role: localStorage.getItem('role') || 'farmer'
+        role: portalMode
     };
 
     return (
@@ -29,38 +63,48 @@ const Settings = () => {
                         <div className="p-details">
                             <div className="detail-item">
                                 <label>{t.fullName}</label>
-                                <p>{user.name}</p>
+                                {isEditing ? (
+                                    <input 
+                                        className="edit-input" 
+                                        type="text" 
+                                        value={editData.name} 
+                                        onChange={(e) => setEditData({...editData, name: e.target.value})} 
+                                    />
+                                ) : (
+                                    <p>{user.name}</p>
+                                )}
                             </div>
                             <div className="detail-item">
                                 <label>{t.phoneNumber}</label>
-                                <p>{user.phone}</p>
+                                {isEditing ? (
+                                    <input 
+                                        className="edit-input" 
+                                        type="tel" 
+                                        value={editData.phone} 
+                                        onChange={(e) => setEditData({...editData, phone: e.target.value})} 
+                                    />
+                                ) : (
+                                    <p>{user.phone}</p>
+                                )}
                             </div>
                             <div className="detail-item">
                                 <label>Role</label>
                                 <p style={{ textTransform: 'capitalize' }}>{user.role === 'farmer' ? t.farmer : t.customer}</p>
                             </div>
                         </div>
-                        <button className="edit-btn-outline">{t.editProfile}</button>
+                        {isEditing ? (
+                            <div style={{ display: 'flex', gap: '10px' }}>
+                                <button className="edit-btn-outline" onClick={() => { setIsEditing(false); setEditData({name: user.name, phone: user.phone}); }} style={{ borderColor: '#e53e3e', color: '#e53e3e' }}>Cancel</button>
+                                <button className="edit-btn-outline" onClick={handleSave} style={{ background: 'var(--primary)', color: 'white' }}>{isSaving ? 'Saving...' : 'Save'}</button>
+                            </div>
+                        ) : (
+                            <button className="edit-btn-outline" onClick={() => setIsEditing(true)}>{t.editProfile}</button>
+                        )}
                     </div>
                 </section>
 
                 <div className="settings-grid">
-                    <div className="setting-card">
-                        <div className="s-icon"><Bell size={24} /></div>
-                        <div className="s-info">
-                            <h4>Notifications</h4>
-                            <p>Manage how you receive alerts and updates.</p>
-                        </div>
-                        <div className="toggle-placeholder"></div>
-                    </div>
-                    <div className="setting-card">
-                        <div className="s-icon"><Shield size={24} /></div>
-                        <div className="s-info">
-                            <h4>Privacy & Security</h4>
-                            <p>Change password and manage 2FA settings.</p>
-                        </div>
-                    </div>
-                    <div className="setting-card">
+                    <div className="setting-card" style={{ cursor: 'default' }}>
                         <div className="s-icon"><Globe size={24} /></div>
                         <div className="s-info">
                             <h4>Language</h4>
@@ -76,13 +120,6 @@ const Settings = () => {
                                     </button>
                                 ))}
                             </div>
-                        </div>
-                    </div>
-                    <div className="setting-card">
-                        <div className="s-icon"><CreditCard size={24} /></div>
-                        <div className="s-info">
-                            <h4>Payment Methods</h4>
-                            <p>Add bank details for direct trade payouts.</p>
                         </div>
                     </div>
                 </div>
@@ -118,6 +155,20 @@ const Settings = () => {
                 .p-details { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
                 .detail-item label { display: block; font-size: 0.8rem; color: #a0aec0; font-weight: 700; margin-bottom: 4px; text-transform: uppercase; }
                 .detail-item p { font-size: 1.1rem; font-weight: 600; color: #2d3748; }
+
+                .edit-input {
+                    background: #f7fafc;
+                    border: 1px solid #e2e8f0;
+                    border-radius: 8px;
+                    padding: 8px 12px;
+                    width: 100%;
+                    font-size: 1rem;
+                    font-family: inherit;
+                    color: #2d3748;
+                    outline: none;
+                    transition: border-color 0.2s;
+                }
+                .edit-input:focus { border-color: var(--primary); background: white; }
 
                 .edit-btn-outline {
                     padding: 10px 24px;

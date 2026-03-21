@@ -256,6 +256,9 @@ const EnergyPlanner = () => {
                                     <div className="metric">
                                         <span className="label">Est. EB Cost</span>
                                         <span className="value highlight">₹{result.powerConsumption.monthlyCost}/mo</span>
+                                        <span className="calculation-hint">
+                                            ({result.powerConsumption.monthlyUnits} units × ₹{result.powerConsumption.tariffApplied})
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="suggestion-box">
@@ -280,7 +283,11 @@ const EnergyPlanner = () => {
                                     </div>
                                 </div>
                                 <div className="suggestion-box solar-box">
-                                    Save ₹{result.solarIntelligence.monthlySaving}/mo. One-time install est: ₹{result.solarIntelligence.installCost.toLocaleString()}
+                                    <p style={{ margin: 0, marginBottom: '4px' }}><strong>Save ₹{result.solarIntelligence.monthlySaving}/mo.</strong></p>
+                                    <span style={{ fontSize: '0.85rem' }}>
+                                        One-time install est: ₹{result.solarIntelligence.installCost.toLocaleString()} <br/>
+                                        <span className="calculation-hint">(Local city rate: ₹{result.solarIntelligence.perKwCost.toLocaleString()} per kW)</span>
+                                    </span>
                                 </div>
                             </div>
 
@@ -302,7 +309,7 @@ const EnergyPlanner = () => {
                                     <div>
                                         <h4>AI Market Prediction</h4>
                                         <p>{result.aiPrediction.priceTrend}</p>
-                                        <small>Best local market to target: <strong>{result.aiPrediction.bestMarket}</strong></small>
+                                        <small>Targeting high-demand zone: <strong>{result.aiPrediction.bestMarket}</strong></small>
                                     </div>
                                 </div>
                             </div>
@@ -577,6 +584,14 @@ const EnergyPlanner = () => {
                     line-height: 1.5;
                 }
                 .solar-box { border-left-color: #10b981; }
+                .calculation-hint {
+                    display: block; 
+                    font-size: 0.75rem; 
+                    color: #64748b; 
+                    margin-top: 4px; 
+                    font-weight: 500;
+                    opacity: 0.8;
+                }
 
                 .ai-rules {
                     list-style: none;

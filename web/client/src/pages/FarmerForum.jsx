@@ -42,6 +42,12 @@ const FarmerForum = () => {
         fetchPosts();
     }, [viewMode]);
 
+    useEffect(() => {
+        const handleClickOutside = () => handleHoverEnd();
+        window.addEventListener('click', handleClickOutside);
+        return () => window.removeEventListener('click', handleClickOutside);
+    }, []);
+
     const fetchUserInfo = async () => {
         try {
             const res = await fetch(`http://localhost:5000/api/auth/user/${userId}`);
@@ -182,7 +188,6 @@ const FarmerForum = () => {
             });
             if (res.ok) {
                 await fetchUserInfo(); // refresh following list
-                if (viewMode === 'Following') fetchPosts(); // refresh feed if in following mode
             }
         } catch (err) { }
     };
@@ -309,8 +314,11 @@ const FarmerForum = () => {
                                                     <span 
                                                         className="sp-username" 
                                                         style={{ cursor: 'pointer' }}
-                                                        onMouseEnter={() => handleHoverStart(post.userId)}
-                                                        onMouseLeave={handleHoverEnd}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (hoveredUser === post.userId) handleHoverEnd();
+                                                            else handleHoverStart(post.userId);
+                                                        }}
                                                     >
                                                         {post.userName}
                                                     </span>
@@ -324,8 +332,7 @@ const FarmerForum = () => {
                                                             initial={{ opacity: 0, scale: 0.9, y: 10 }}
                                                             animate={{ opacity: 1, scale: 1, y: 0 }}
                                                             exit={{ opacity: 0, scale: 0.9, y: 10 }}
-                                                            onMouseEnter={() => setHoveredUser(post.userId)}
-                                                            onMouseLeave={handleHoverEnd}
+                                                            onClick={(e) => e.stopPropagation()}
                                                         >
                                                             <div className="hc-header">
                                                                 <div className="sp-avatar my-avatar" style={{ width: '40px', height: '40px', fontSize: '1rem' }}>{hoveredData.name.charAt(0).toUpperCase()}</div>
@@ -344,24 +351,39 @@ const FarmerForum = () => {
                                                                     <span>Following</span>
                                                                 </div>
                                                             </div>
-                                                            {hoveredData._id !== userId && (
-                                                                <button 
-                                                                    className={`hc-follow-btn ${isFollowing(hoveredData._id) ? 'following' : ''}`}
-                                                                    onClick={(e) => {
-                                                                        e.stopPropagation();
-                                                                        handleFollow(hoveredData._id);
-                                                                        // Update local hovered data to show immediate change
-                                                                        setHoveredData(prev => ({
+                                                            <button 
+                                                                className={`hc-follow-btn ${isFollowing(hoveredData._id) ? 'following' : ''}`}
+                                                                onClick={(e) => {
+                                                                    e.preventDefault();
+                                                                    e.stopPropagation();
+                                                                    handleFollow(hoveredData._id);
+                                                                    // Update local hovered data to show immediate change safely
+                                                                    let wasFollowing = false;
+                                                                    setHoveredData(prev => {
+                                                                        const currentFollowers = prev.followers || [];
+                                                                        wasFollowing = currentFollowers.includes(userId);
+                                                                        
+                                                                        return {
                                                                             ...prev,
-                                                                            followers: isFollowing(hoveredData._id) 
-                                                                                ? prev.followers.filter(id => id !== userId)
-                                                                                : [...(prev.followers || []), userId]
-                                                                        }));
-                                                                    }}
-                                                                >
-                                                                    {isFollowing(hoveredData._id) ? 'Unfollow' : 'Follow Farmer'}
-                                                                </button>
-                                                            )}
+                                                                            followers: wasFollowing 
+                                                                                ? currentFollowers.filter(id => id !== userId)
+                                                                                : [...currentFollowers, userId]
+                                                                        };
+                                                                    });
+
+                                                                    // Optimistically update the current user following state so the button text updates instantly
+                                                                    setCurrentUserInfo(prevUser => {
+                                                                        if (!prevUser) return prevUser;
+                                                                        const currentFollowing = prevUser.following || [];
+                                                                        return {
+                                                                            ...prevUser,
+                                                                            following: wasFollowing ? currentFollowing.filter(id => id !== hoveredData._id) : [...currentFollowing, hoveredData._id]
+                                                                        };
+                                                                    });
+                                                                }}
+                                                            >
+                                                                {isFollowing(hoveredData._id) ? 'Unfollow' : 'Follow Farmer'}
+                                                            </button>
                                                         </motion.div>
                                                     )}
                                                 </AnimatePresence>
@@ -446,7 +468,9 @@ const FarmerForum = () => {
                         </div>
                         <div className="follower-stats">
                             <div className="stat"><span>{currentUserInfo?.following?.length || 0}</span> Following</div>
-                            {portalMode === 'farmer' && <div className="stat"><span>{currentUserInfo?.followers?.length || 0}</span> Followers</div>}
+                            {(portalMode === 'farmer' || currentUserInfo?.role === 'farmer') && (
+                                <div className="stat"><span>{currentUserInfo?.followers?.length || 0}</span> Followers</div>
+                            )}
                         </div>
                     </div>
 
@@ -575,9 +599,9 @@ const FarmerForum = () => {
                 .dev-profile-summary .sp-meta { margin-top: 12px; margin-bottom: 15px; }
                 .dev-profile-summary .sp-username { font-size: 1.1rem; }
                 .sp-name { color: #718096; font-size: 0.85rem; }
-                .follower-stats { display: flex; gap: 24px; width: 100%; justify-content: center; padding-top: 15px; border-top: 1px solid #edf2f7; }
-                .stat { display: flex; flex-direction: column; font-size: 0.75rem; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
-                .stat span { font-size: 1.2rem; color: #1a202c; font-weight: 800; }
+                .follower-stats { display: flex; gap: 24px; width: 100%; justify-content: center; padding: 15px 0; border-top: 1px solid #edf2f7; border-bottom: 1px solid #edf2f7; margin-top: 15px; }
+                .stat { display: flex; flex-direction: column; align-items: center; font-size: 0.7rem; color: #718096; text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+                .stat span { font-size: 1.3rem; color: #2d3748; font-weight: 800; margin-bottom: 2px; }
 
                 .search-users-box { background: white; padding: 20px; border-radius: 16px; border: 1px solid #edf2f7; }
                 .sidebar-header-title { font-weight: 700; color: #a0aec0; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 15px; }

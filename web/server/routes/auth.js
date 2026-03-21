@@ -111,22 +111,38 @@ router.post('/:id/follow', async (req, res) => {
         const isFollowing = currentUser.following.includes(targetId);
 
         if (isFollowing) {
-            // Unfollow
-            currentUser.following = currentUser.following.filter(id => id.toString() !== targetId);
-            targetUser.followers = targetUser.followers.filter(id => id.toString() !== currentUserId);
+            // Unfollow - Atomically remove from arrays
+            await User.findByIdAndUpdate(currentUserId, { $pull: { following: targetId } });
+            await User.findByIdAndUpdate(targetId, { $pull: { followers: currentUserId } });
         } else {
-            // Follow
-            currentUser.following.push(targetId);
-            targetUser.followers.push(currentUserId);
+            // Follow - Atomically add to arrays (ensures no duplicates)
+            await User.findByIdAndUpdate(currentUserId, { $addToSet: { following: targetId } });
+            await User.findByIdAndUpdate(targetId, { $addToSet: { followers: currentUserId } });
         }
-
-        await currentUser.save();
-        await targetUser.save();
 
         res.json({ success: true, isFollowing: !isFollowing });
     } catch (err) {
         console.error('Follow error:', err);
         res.status(500).json({ message: 'Failed to update follow status' });
+    }
+});
+// Update user profile
+router.put('/profile/:id', async (req, res) => {
+    try {
+        const { name, phone } = req.body;
+        const updatedUser = await User.findByIdAndUpdate(
+            req.params.id,
+            { name, phone },
+            { new: true, runValidators: true }
+        );
+        
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json({ message: 'Profile updated successfully', user: updatedUser });
+    } catch (err) {
+        console.error('Update profile error:', err);
+        res.status(500).json({ message: 'Failed to update profile' });
     }
 });
 
