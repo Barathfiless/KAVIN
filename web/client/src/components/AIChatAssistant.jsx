@@ -48,6 +48,19 @@ const AIChatAssistant = () => {
         }
     };
 
+    const formatMessage = (text) => {
+        if (!text) return "";
+        return text.split('\n').map((line, i) => {
+            const parts = line.split(/\*\*(.*?)\*\*/g);
+            return (
+                <React.Fragment key={i}>
+                    {parts.map((part, j) => (j % 2 === 1 ? <strong key={j}>{part}</strong> : part))}
+                    {i !== text.split('\n').length - 1 && <br />}
+                </React.Fragment>
+            );
+        });
+    };
+
     return (
         <div className="ai-assistant-wrapper">
             {/* Toggle Button */}
@@ -86,7 +99,7 @@ const AIChatAssistant = () => {
                                         {msg.sender === 'bot' ? <Bot size={14} /> : <User size={14} />}
                                     </div>
                                     <div className="msg-bubble">
-                                        {msg.text}
+                                        {formatMessage(msg.text)}
                                     </div>
                                 </div>
                             ))}

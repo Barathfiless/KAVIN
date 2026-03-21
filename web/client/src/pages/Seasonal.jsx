@@ -463,7 +463,7 @@ const Seasonal = () => {
                         <motion.section className="section-block demand-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                             <div className="results-header">
                                 <h3 className="section-title"><ShoppingBag size={18} /> Real-time Market Demand</h3>
-                                <p style={{ fontSize: '0.8rem', color: '#718096' }}>Derived from current customer orders across regions</p>
+                                {/* Description removed for cleaner UI */}
                             </div>
                             <div className="demand-grid">
                                 {marketDemand.length > 0 ? marketDemand.map((item, idx) => (
@@ -554,7 +554,7 @@ const Seasonal = () => {
                     box-shadow: 0 4px 20px rgba(0,0,0,0.04);
                     position: sticky;
                     top: 75px;
-                    z-index: 1000;
+                    z-index: 80;
                     background: #ffffff;
                     box-shadow: 0 8px 30px rgba(0,0,0,0.08);
                 }

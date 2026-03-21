@@ -146,13 +146,13 @@ const Sidebar = ({ isOpen, onClose }) => {
                     position: relative;
                 }
                 .nav-item:hover {
-                    background: rgba(255,255,255,0.08);
+                    background: rgba(251, 133, 0, 0.15);
                     color: white;
                 }
                 .nav-item.active {
-                    background: var(--primary);
+                    background: #fb8500;
                     color: white;
-                    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                    box-shadow: 0 4px 15px rgba(251, 133, 0, 0.3);
                 }
                 .item-icon {
                     margin-right: 12px;
