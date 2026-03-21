@@ -72,7 +72,7 @@ const FavoriteFarms = () => {
                 </div>
             ) : (
                 <div style={{ textAlign: 'center', padding: '80px 20px', background: 'white', borderRadius: '24px', border: '1px solid #edf2f7' }}>
-                    <div style={{ fontSize: '3.5rem', marginBottom: '20px' }}>💚</div>
+                    <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center' }}><Heart size={64} fill="#e53e3e" color="#e53e3e" /></div>
                     <h2 style={{ color: '#1a202c' }}>Your Heart List is Empty</h2>
                     <p style={{ color: '#718096', maxWidth: '350px', margin: '0 auto 30px', lineHeight: 1.6 }}>Discover amazing local farms on the map and heart them to see them here for quick access later.</p>
                     <button className="btn-primary" onClick={() => window.location.hash = '/dashboard'}>Discover Farms</button>

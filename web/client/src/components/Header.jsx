@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Bell, User, ChevronDown, LogOut, Check, Info, BellOff, Trash2, X, Globe, RefreshCw } from 'lucide-react';
+import { Bell, User, ChevronDown, LogOut, Check, Info, BellOff, Trash2, X, Globe, RefreshCw, Menu } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '../context/LanguageContext';
 import { languages } from '../utils/translations';
 
-const Header = () => {
+const Header = ({ onMenuClick }) => {
     const navigate = useNavigate();
     const location = useLocation();
     const { currentLang, setCurrentLang, t } = useLanguage();
@@ -88,6 +88,9 @@ const Header = () => {
 
     return (
         <header className="header">
+            <button className="mobile-menu-toggle" onClick={onMenuClick}>
+                <Menu size={24} />
+            </button>
 
             <div className="header-actions">
                 <div className="lang-wrapper">
@@ -261,6 +264,14 @@ const Header = () => {
                     top: 0;
                     z-index: 90;
                     border-bottom: 1px solid #edf2f7;
+                }
+                .mobile-menu-toggle {
+                    display: none;
+                    background: none;
+                    border: none;
+                    color: #4a5568;
+                    cursor: pointer;
+                    margin-right: auto;
                 }
                 .header-actions {
                     display: flex;
@@ -465,7 +476,7 @@ const Header = () => {
                 .user-name { font-size: 0.85rem; font-weight: 700; color: #1a202c; }
                 .user-role { font-size: 0.7rem; color: #718096; font-weight: 600; text-transform: uppercase; }
                 .rotate { transform: rotate(180deg); }
-
+ 
                 .profile-dropdown { width: 220px; }
                 .p-header { padding: 20px; border-bottom: 1px solid #edf2f7; display: flex; gap: 12px; align-items: center; }
                 .p-avatar { width: 40px; height: 40px; background: #f0f7f4; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
@@ -490,9 +501,39 @@ const Header = () => {
                 .menu-link:hover { background: #f8fafc; color: var(--primary); }
                 .menu-link.logout { color: #e63946; }
                 .menu-link.logout:hover { background: #fff5f5; }
-
+ 
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
                 .spin-slow { animation: spin 1s linear infinite; }
+
+                @media (max-width: 1024px) {
+                    .header {
+                        padding: 0 16px;
+                        justify-content: space-between;
+                    }
+                    .header-actions {
+                        gap: 8px;
+                    }
+                    .icon-btn {
+                        padding: 8px;
+                    }
+                    .mobile-menu-toggle {
+                        display: block;
+                    }
+                    .user-info {
+                        display: none;
+                    }
+                    .user-profile {
+                        padding: 4px;
+                        gap: 0;
+                    }
+                    .user-profile svg:last-child {
+                        display: none;
+                    }
+                    .dropdown-card {
+                        width: 280px;
+                        right: -10px;
+                    }
+                }
                 `}
             </style>
         </header>

@@ -6,10 +6,10 @@ import {
 } from 'lucide-react';
 
 const statusConfig = {
-    'Ready':        { color: '#2f855a', bg: '#f0fff4', icon: '✅' },
-    'Growing':      { color: '#d69e2e', bg: '#fffff0', icon: '🌱' },
-    'Pending':      { color: '#718096', bg: '#f7fafc', icon: '⏳' },
-    'Out of Stock': { color: '#c53030', bg: '#fff5f5', icon: '❌' },
+    'Ready':        { color: '#2f855a', bg: '#f0fff4' },
+    'Growing':      { color: '#d69e2e', bg: '#fffff0' },
+    'Pending':      { color: '#718096', bg: '#f7fafc' },
+    'Out of Stock': { color: '#c53030', bg: '#fff5f5' },
 };
 
 const MyListings = () => {
@@ -114,9 +114,9 @@ const MyListings = () => {
                             className="listing-card"
                         >
                             <div className="listing-icon-area">
-                                <span className="listing-emoji">{item.icon || '🌱'}</span>
+                                <div className="listing-icon-placeholder"><Tag size={24} color="var(--primary)" /></div>
                                 <span className="listing-status-badge" style={{ background: cfg.bg, color: cfg.color }}>
-                                    {cfg.icon} {item.status}
+                                    {item.status}
                                 </span>
                             </div>
                             <div className="listing-body">
@@ -125,8 +125,8 @@ const MyListings = () => {
                                     {item.variety && <span className="variety-tag">{item.variety}</span>}
                                 </div>
                                 <div className="listing-meta">
-                                    <span>💰 {item.price || 'No price set'}</span>
-                                    <span>📦 {item.quantity || 'N/A'}</span>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><TrendingUp size={14} /> {item.price || 'No price set'}</span>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Package size={14} /> {item.quantity || 'N/A'}</span>
                                     <span className="order-pill">{orderCount} order{orderCount !== 1 ? 's' : ''}</span>
                                 </div>
                                 <div className="listing-actions">

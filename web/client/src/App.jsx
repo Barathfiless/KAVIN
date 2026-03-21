@@ -13,6 +13,7 @@ import Orders from './pages/Orders'
 import FavoriteFarms from './pages/FavoriteFarms'
 import Reviews from './pages/Reviews'
 import FarmerOrders from './pages/FarmerOrders'
+import EnergyPlanner from './pages/EnergyPlanner'
 import { LanguageProvider } from './context/LanguageContext'
 
 const TabRedirect = ({ element }) => {
@@ -46,6 +47,7 @@ function App() {
             <Route path="/farmer/orders" element={<TabRedirect element={<FarmerOrders />} />} />
             <Route path="/farmer/community" element={<TabRedirect element={<FarmerForum />} />} />
             <Route path="/farmer/seasonal" element={<TabRedirect element={<Seasonal />} />} />
+            <Route path="/farmer/planner" element={<TabRedirect element={<EnergyPlanner />} />} />
             
             {/* Customer Specific Routes */}
             <Route path="/customer/orders" element={<TabRedirect element={<Orders />} />} />

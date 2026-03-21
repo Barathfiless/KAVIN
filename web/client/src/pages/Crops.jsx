@@ -81,7 +81,7 @@ const Crops = () => {
                 await axios.post('http://localhost:5000/api/crops/add', {
                     ...newCrop,
                     userId,
-                    icon: '🌱'
+                    icon: 'sprout'
                 });
             }
             closeModal();
@@ -376,7 +376,7 @@ const Crops = () => {
                                 className="crop-item"
                             >
                                 <div className="col crop">
-                                    <div className="crop-icon">{crop.icon || '🌱'}</div>
+                                    <div className="crop-icon"><Sprout size={24} color="#2d6a4f" /></div>
                                     <div className="crop-info">
                                         <span className="crop-name">{crop.name}</span>
                                         <span className="crop-variety">{crop.variety}</span>
@@ -435,7 +435,7 @@ const Crops = () => {
                             transition={{ delay: index * 0.05 }}
                             className="grid-card"
                         >
-                            <div className="grid-crop-icon">{crop.icon || '🌱'}</div>
+                            <div className="grid-crop-icon"><Sprout size={32} color="#2d6a4f" /></div>
                             <div className="grid-crop-name">{crop.name}</div>
                             <div className="grid-crop-variety">{crop.variety}</div>
                             <div className="grid-meta">
@@ -633,6 +633,47 @@ const Crops = () => {
                     box-shadow: 0 2px 4px rgba(0,0,0,0.06);
                 }
 
+                /* ── Mobile Optimization ── */
+                @media (max-width: 800px) {
+                    .page-header {
+                        flex-direction: column;
+                        align-items: stretch;
+                    }
+                    .header-controls {
+                        justify-content: space-between;
+                        width: 100%;
+                    }
+                    .search-box {
+                        width: 100%;
+                    }
+                    .list-header {
+                        display: none;
+                    }
+                    .crop-item {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        padding: 20px;
+                        gap: 12px;
+                    }
+                    .col {
+                        width: 100%;
+                        justify-content: flex-start !important;
+                    }
+                    .col.crop {
+                        margin-bottom: 8px;
+                    }
+                    .action-buttons {
+                        width: 100%;
+                        justify-content: flex-end;
+                        border-top: 1px solid #f1f5f9;
+                        padding-top: 12px;
+                    }
+                    .modal-content {
+                        width: calc(100% - 32px);
+                        margin: 16px;
+                        padding: 24px;
+                    }
+                }
                 /* ── Active filter chips ── */
                 .active-filter-chips { display: flex; gap: 8px; }
                 .chip {

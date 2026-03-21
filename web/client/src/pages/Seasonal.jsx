@@ -236,7 +236,8 @@ const Seasonal = () => {
                     cropName: crop.name,
                     location: locationName || 'Current Location',
                     weather: weather,
-                    soil: SOIL_INFO[soilType].name
+                    soil: SOIL_INFO[soilType].name,
+                    confidence: crop.score
                 })
             });
             const data = await res.json();
@@ -619,7 +620,7 @@ const Seasonal = () => {
                 }
                 .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-                .hot-badge { background: #fff5f5; color: #e53e3e; font-size: 0.65rem; padding: 4px 10px; border-radius: 20px; font-weight: 800; display: flex; align-items: center; gap: 4px; border: 1px solid #fed7d7; white-space: nowrap; flex-shrink: 0; }
+                .hot-badge { background: #fef2f2; color: #ef4444; font-size: 0.6rem; padding: 2px 8px; border-radius: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; white-space: nowrap; flex-shrink: 0; }
 
                 /* Demand UI */
                 .demand-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 10px; }
@@ -642,8 +643,9 @@ const Seasonal = () => {
                     .advisor-results-split { grid-template-columns: 1fr; max-width: 850px; }
                 }
 
-                .section-block { background: white; border-radius: 20px; border: 1px solid #edf2f7; padding: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
-                .results-header { margin-bottom: 20px; min-height: 32px; display: flex; align-items: center; }
+                .section-block { background: white; border-radius: 12px; border: 1px solid #e2e8f0; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03); display: flex; flex-direction: column; }
+                .results-header { margin-bottom: 16px; min-height: 32px; display: flex; align-items: center; border-bottom: 1px solid #f1f5f9; padding-bottom: 16px; }
+                .section-title { font-size: 1rem; font-weight: 600; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 8px; }
                 .results-section { min-height: 100%; display: flex; flex-direction: column; height: 100%; }
                 .crop-results-scroll { 
                     flex: 1; 
@@ -656,10 +658,10 @@ const Seasonal = () => {
                 .crop-results-scroll::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
                 .crop-results-scroll::-webkit-scrollbar-thumb:hover { background: #cbd5e0; }
 
-                .demand-highlights { border-top: 4px solid #e53e3e; }
-                .demand-highlight-card { border-color: #fed7e2; background: #fffafb; }
-                .demand-highlight-card:hover { border-color: #f687b3; }
-                .all-matches { border-top: 4px solid var(--primary); }
+                .demand-highlights { border-top: none; }
+                .demand-highlight-card { background: transparent; }
+                .demand-highlight-card:hover { background: #f8fafc; }
+                .all-matches { border-top: none; }
 
                 .seasonal-main-layout { display: grid; grid-template-columns: 1fr; gap: 24px; align-items: start; }
 
@@ -668,38 +670,41 @@ const Seasonal = () => {
                     grid-template-columns: 24px 1fr 85px 125px 38px;
                     align-items: center; 
                     gap: 14px; 
-                    padding: 12px 16px; 
-                    border-radius: 14px; border: 1px solid #edf2f7; margin-bottom: 10px;
+                    padding: 16px 8px; 
+                    border-bottom: 1px dashed #e2e8f0;
+                    margin-bottom: 0px;
                     transition: all 0.2s;
+                    border-radius: 6px;
                 }
-                .crop-row-card:hover { transform: translateY(-2px); border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-                .crop-row-rank { font-weight: 800; color: #cbd5e0; text-align: center; font-size: 0.95rem; }
+                .crop-row-card:last-child { border-bottom: none; }
+                .crop-row-card:hover { background: #f8fafc; }
+                .crop-row-rank { font-weight: 600; color: #94a3b8; text-align: center; font-size: 0.9rem; }
                 .crop-row-info { min-width: 0; }
-                .crop-row-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
-                .crop-row-name { font-weight: 700; color: #2d3748; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                .tier-badge { font-size: 0.6rem; padding: 2px 7px; border-radius: 8px; font-weight: 800; white-space: nowrap; }
-                .tier-excellent { background: #c6f6d5; color: #22543d; }
-                .tier-good { background: #fefcbf; color: #744210; }
-                .tier-fair { background: #fed7aa; color: #7b341e; }
-                .crop-row-meta { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #718096; white-space: nowrap; overflow: hidden; }
-                .dot { width: 3px; height: 3px; background: #cbd5e0; border-radius: 50%; flex-shrink: 0; }
+                .crop-row-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: wrap; row-gap: 4px; }
+                .crop-row-name { font-weight: 600; color: #1e293b; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex-shrink: 0; }
+                .tier-badge { font-size: 0.6rem; padding: 2px 8px; border-radius: 12px; font-weight: 700; white-space: nowrap; flex-shrink: 0; }
+                .tier-excellent { background: #dcfce7; color: #166534; }
+                .tier-good { background: #fef9c3; color: #854d0e; }
+                .tier-fair { background: #ffedd5; color: #9a3412; }
+                .crop-row-meta { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #64748b; white-space: nowrap; overflow: hidden; }
+                .dot { width: 3px; height: 3px; background: #cbd5e1; border-radius: 50%; flex-shrink: 0; }
                 .crop-row-score { text-align: right; }
-                .score-label { font-size: 0.8rem; font-weight: 800; margin-bottom: 4px; white-space: nowrap; color: var(--primary-dark); }
-                .score-bar-mini { height: 4px; background: #edf2f7; border-radius: 2px; overflow: hidden; width: 100%; }
+                .score-label { font-size: 0.75rem; font-weight: 700; margin-bottom: 6px; white-space: nowrap; color: #475569; }
+                .score-bar-mini { height: 4px; background: #f1f5f9; border-radius: 2px; overflow: hidden; width: 100%; }
                 .score-fill-mini { height: 100%; transition: width 0.5s; }
                 .crop-row-actions { display: flex; justify-content: flex-end; }
                 .ai-insight-btn { 
                     display: flex; align-items: center; gap: 6px; 
-                    background: #f0fff4; color: #2d6a4f; border: 1.5px solid #c6f6d5;
-                    padding: 0 12px; border-radius: 10px; font-size: 0.75rem; font-weight: 700;
+                    background: transparent; color: #475569; border: 1px solid #e2e8f0;
+                    padding: 0 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;
                     cursor: pointer; transition: all 0.2s; white-space: nowrap;
-                    height: 36px;
+                    height: 32px;
                     width: 100%; justify-content: center;
                 }
-                .ai-insight-btn:hover:not(:disabled) { background: #2d6a4f; color: white; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(45,106,79,0.2); }
+                .ai-insight-btn:hover:not(:disabled) { background: #f0fff4; color: #10b981; border-color: #10b981; }
                 .ai-insight-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-                .ai-insight-btn.secondary { background: white; border: 1px solid #edf2f7; color: #718096; width: 36px; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
-                .ai-insight-btn.secondary:hover { background: #f8fafc; color: var(--primary); border-color: var(--primary); }
+                .ai-insight-btn.secondary { background: transparent; border: 1px solid #e2e8f0; color: #475569; width: 32px; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
+                .ai-insight-btn.secondary:hover { background: #eff6ff; color: #3b82f6; border-color: #3b82f6; }
 
                 .results-panel { min-height: 400px; }
                 .results-empty-centered {

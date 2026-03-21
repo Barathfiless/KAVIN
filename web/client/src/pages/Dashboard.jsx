@@ -567,6 +567,41 @@ const Dashboard = () => {
                 }
                 .advisor-promo:hover { transform: scale(1.02); box-shadow: 0 4px 12px rgba(45,106,79,0.3); }
                 .empty-trends { padding: 20px; text-align: center; color: #a0aec0; font-size: 0.85rem; }
+
+                @media (max-width: 1024px) {
+                    .dashboard-sections {
+                        grid-template-columns: 1fr;
+                        gap: 16px;
+                    }
+                    .stats-grid {
+                        grid-template-columns: repeat(2, 1fr);
+                        gap: 12px;
+                    }
+                    .stat-card {
+                        padding: 16px;
+                    }
+                    .chart-section {
+                        padding: 15px;
+                    }
+                    .chart-header {
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 15px;
+                    }
+                    .chart-filters {
+                        width: 100%;
+                        justify-content: space-between;
+                    }
+                }
+
+                @media (max-width: 500px) {
+                    .stats-grid {
+                        grid-template-columns: 1fr;
+                    }
+                    .dashboard-welcome h1 {
+                        font-size: 1.4rem;
+                    }
+                }
                 `}
             </style>
         </div>

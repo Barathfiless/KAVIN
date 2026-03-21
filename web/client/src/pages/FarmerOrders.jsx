@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
     Package, Clock, CheckCircle, Truck, 
-    XCircle, Phone, MapPin, Search, Filter 
+    XCircle, Phone, MapPin, Search, Filter, ShoppingBag
 } from 'lucide-react';
 
 const statusColors = {
@@ -136,7 +136,7 @@ const FarmerOrders = () => {
                     );
                 }) : (
                     <div style={{ textAlign: 'center', padding: '80px 20px', background: 'white', borderRadius: '32px', border: '1px solid #edf2f7' }}>
-                        <div style={{ fontSize: '3.5rem', marginBottom: '20px' }}>📉</div>
+                        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}><ShoppingBag size={64} color="var(--primary)" /></div>
                         <h2 style={{ color: '#1a202c' }}>No {filter !== 'All' ? filter : ''} Orders</h2>
                         <p style={{ color: '#718096' }}>{filter === 'All' ? 'When customers order your listed crops, they will appear here.' : 'No orders currently match this status filter.'}</p>
                     </div>

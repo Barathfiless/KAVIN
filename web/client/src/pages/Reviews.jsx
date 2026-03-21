@@ -80,13 +80,13 @@ const Reviews = () => {
                                 </div>
                             </div>
                             <div style={{ fontSize: '0.8rem', color: '#a0aec0' }}>
-                                {review.verifiedPurchase ? '✅ Verified Purchase' : ''}
+                                {review.verifiedPurchase ? 'Verified Purchase' : ''}
                             </div>
                         </div>
                     </motion.div>
                 )) : (
                     <div style={{ textAlign: 'center', padding: '100px 20px', background: 'white', borderRadius: '32px', border: '1px solid #edf2f7' }}>
-                        <div style={{ fontSize: '3.5rem', marginBottom: '20px' }}>⭐</div>
+                        <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center' }}><Star size={64} fill="#ffb703" color="#ffb703" /></div>
                         <h2 style={{ color: '#1a202c' }}>No Reviews Yet</h2>
                         <p style={{ color: '#718096', maxWidth: '350px', margin: '0 auto' }}>Help our community grow! Be the first to share your experience with local harvest.</p>
                     </div>

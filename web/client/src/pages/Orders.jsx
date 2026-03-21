@@ -180,7 +180,7 @@ const MyOrders = () => {
                     );
                 }) : (
                     <div className="empty-state" style={{ textAlign: 'center', padding: '60px 20px', background: 'white', borderRadius: '24px', border: '1px solid #edf2f7' }}>
-                        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📦</div>
+                        <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}><ShoppingBag size={64} color="var(--primary)" /></div>
                         <h2 style={{ color: '#1a202c' }}>No orders yet</h2>
                         <p style={{ color: '#718096', maxWidth: '300px', margin: '0 auto 24px' }}>Your purchase history will appear here once you place your first order.</p>
                         <button className="btn-primary" onClick={() => window.location.hash = '/dashboard'}>Explore Marketplace</button>

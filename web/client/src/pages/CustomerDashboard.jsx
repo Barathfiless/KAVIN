@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Phone, Sprout, ShoppingBag, Star, MapPin, Search, Heart, Clock, ChevronLeft, Map as MapIcon, Locate } from 'lucide-react';
+import { User, Phone, Sprout, ShoppingBag, Star, MapPin, Search, Heart, Clock, ChevronLeft, Map as MapIcon, Locate, CheckCircle } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -220,7 +220,7 @@ const CustomerDashboard = () => {
                         >
                             <div className="modal-header">
                                 <div>
-                                    <span className="modal-emoji">{selectedCrop.icon || '🌾'}</span>
+                                    <div className="modal-icon-wrap"><Sprout size={32} color="var(--primary)" /></div>
                                     <h2>{selectedCrop.name}</h2>
                                     <p>{selectedCrop.variety && `${selectedCrop.variety} · `}{selectedCrop.price}</p>
                                 </div>
@@ -259,7 +259,7 @@ const CustomerDashboard = () => {
                                                     <div className="cultivating-tags">
                                                         {farmerCrops.map((c, i) => (
                                                             <span key={i} className="cultiv-tag">
-                                                                {c.icon || '🌱'} {c.name}
+                                                                <Sprout size={14} /> {c.name}
                                                             </span>
                                                         ))}
                                                         {farmerCrops.length === 0 && <span className="empty-sm">No other crops listed.</span>}
@@ -323,7 +323,7 @@ const CustomerDashboard = () => {
                                 onClick={handlePlaceOrder}
                                 disabled={placing}
                             >
-                                {placing ? 'Placing Order...' : '✅ Place Order'}
+                                {placing ? 'Placing Order...' : 'Place Order'}
                             </button>
                         </motion.div>
                     </motion.div>
@@ -341,7 +341,7 @@ const CustomerDashboard = () => {
                             initial={{ scale: 0.8 }} animate={{ scale: 1 }} exit={{ scale: 0.8 }}
                             className="success-modal"
                         >
-                            <div className="success-icon">🎉</div>
+                            <div className="success-icon"><CheckCircle size={64} color="#2d6a4f" /></div>
                             <h2>Order Placed!</h2>
                             <p>Your order for <strong>{orderSuccess.cropName}</strong> has been placed successfully. The farmer will confirm it shortly.</p>
                             <p className="order-id-tag">Order ID: #{orderSuccess._id?.slice(-8).toUpperCase()}</p>
@@ -401,7 +401,7 @@ const CustomerDashboard = () => {
                                         className="farm-card"
                                     >
                                         <div className="card-image-placeholder">
-                                            <span style={{ fontSize: '2.5rem' }}>{crop.icon || '🌾'}</span>
+                                            <Sprout size={48} color="#2d6a4f" opacity={0.2} />
                                             <span className="crop-price-tag">{crop.price || 'Market Price'}</span>
                                         </div>
                                         <div className="card-info">
@@ -618,7 +618,7 @@ const CustomerDashboard = () => {
                 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 9999; }
                 .checkout-modal { background: white; border-radius: 28px; width: 750px; max-width: 95vw; padding: 28px; box-shadow: 0 30px 80px rgba(0,0,0,0.2); }
                 .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; border-bottom: 1px solid #edf2f7; padding-bottom: 15px; }
-                .modal-emoji { font-size: 2.2rem; display: block; margin-bottom: 5px; }
+                .modal-icon-wrap { background: #f0fff4; width: 56px; height: 56px; border-radius: 16px; display: flex; align-items: center; justify-content: center; margin-bottom: 10px; }
                 .modal-header h2 { margin: 0; font-size: 1.5rem; color: #1a202c; }
                 .modal-header p { margin: 4px 0 0; color: #718096; }
                 .modal-close { background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; font-size: 0.9rem; color: #4a5568; }
