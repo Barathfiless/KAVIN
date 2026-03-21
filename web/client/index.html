@@ -7,7 +7,62 @@
     <title>client</title>
   </head>
   <body>
+    <div id="google_translate_element" style="display:none;"></div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    
+    <script type="text/javascript">
+      function googleTranslateElementInit() {
+        new google.translate.TranslateElement({
+            pageLanguage: 'en', 
+            includedLanguages: 'hi,ta,te,mr,bn,gu,kn,ml,pa,en',
+            autoDisplay: false
+        }, 'google_translate_element');
+      }
+    </script>
+    <script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+    
+    <style>
+      /* Ultra-aggressive Google Translate Toolbar Hider */
+      .goog-te-banner-frame.skiptranslate,
+      .goog-te-banner-frame,
+      #goog-gt-tt,
+      .goog-tooltip,
+      .goog-tooltip:hover,
+      .goog-text-highlight,
+      #google_translate_element,
+      .VIpgJd-Zvi9od-aZ2wEe-wOHMyf,
+      .VIpgJd-Zvi9od-aZ2wEe-wOHMyf-ti6hGc,
+      .VIpgJd-Zvi9od-xl07Ob-OEVmcd {
+          display: none !important;
+          visibility: hidden !important;
+      }
+      
+      /* Catch any iframe directly injected by translate */
+      body > iframe[src*="translate.googleapis"] {
+          display: none !important;
+          visibility: hidden !important;
+          height: 0 !important;
+          width: 0 !important;
+      }
+
+      /* Some environments wrap it in a skiptranslate div */
+      body > div.skiptranslate {
+          display: none !important;
+          visibility: hidden !important;
+          height: 0 !important;
+          width: 0 !important;
+      }
+
+      /* Force body to ignore the margin top push */
+      body {
+          top: 0px !important;
+          position: relative !important;
+          margin-top: 0px !important;
+      }
+      html {
+          top: 0px !important;
+      }
+    </style>
   </body>
 </html>

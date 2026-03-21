@@ -8,6 +8,26 @@ export const LanguageProvider = ({ children }) => {
 
     useEffect(() => {
         localStorage.setItem('language', currentLang);
+        
+        // Intercept and synchronize explicitly with the hidden Google Translate widget
+        const triggerGoogleTranslate = () => {
+            const selectField = document.querySelector('.goog-te-combo');
+            if (selectField) {
+                selectField.value = currentLang;
+                selectField.dispatchEvent(new Event('change'));
+            } else {
+                // If widget is still loading on initial mount
+                setTimeout(() => {
+                    const retrySelect = document.querySelector('.goog-te-combo');
+                    if(retrySelect) {
+                        retrySelect.value = currentLang;
+                        retrySelect.dispatchEvent(new Event('change'));
+                    }
+                }, 1500);
+            }
+        };
+        triggerGoogleTranslate();
+
     }, [currentLang]);
 
     const t = translations[currentLang] || translations['en'];
