@@ -46,10 +46,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                     <Sprout size={24} color="#fff" />
                 </div>
                 <h3>{portalMode === 'farmer' ? 'Farmer Central' : 'Harvest Hub'}</h3>
-                
-                <button className="mobile-close-btn" onClick={onClose}>
-                    <X size={24} />
-                </button>
             </div>
 
             <nav className="sidebar-nav">
@@ -150,9 +146,9 @@ const Sidebar = ({ isOpen, onClose }) => {
                     color: white;
                 }
                 .nav-item.active {
-                    background: #fb8500;
+                    background: #FF9933; /* Saffron */
                     color: white;
-                    box-shadow: 0 4px 15px rgba(251, 133, 0, 0.3);
+                    box-shadow: 0 4px 15px rgba(255, 153, 51, 0.3);
                 }
                 .item-icon {
                     margin-right: 12px;
@@ -181,17 +177,19 @@ const Sidebar = ({ isOpen, onClose }) => {
                     align-items: center;
                     gap: 12px;
                     padding: 12px;
-                    background: rgba(230, 57, 70, 0.1);
-                    border: 1px solid rgba(230, 57, 70, 0.2);
-                    color: #e63946;
+                    background: #DC3545; /* Solid Red */
+                    border: none;
+                    color: white;
                     border-radius: 12px;
                     cursor: pointer;
-                    font-weight: 600;
+                    font-weight: 700;
                     transition: all 0.3s ease;
                 }
                 .logout-btn:hover {
-                    background: #e63946;
+                    background: #bb2d3b;
                     color: white;
+                    transform: translateY(-2px);
+                    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
                 }
 
                 @media (max-width: 1024px) {

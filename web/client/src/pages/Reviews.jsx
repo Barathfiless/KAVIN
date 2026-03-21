@@ -34,7 +34,6 @@ const Reviews = () => {
                 style={{ marginBottom: '32px' }}
             >
                 <h1 style={{ fontSize: '1.8rem', color: 'var(--primary-dark)', marginBottom: '8px' }}>Community Reviews</h1>
-                <p style={{ color: '#718096', fontSize: '0.9rem' }}>Real feedback from local shoppers connecting with real farmers.</p>
             </motion.div>
 
             <div className="reviews-list" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>

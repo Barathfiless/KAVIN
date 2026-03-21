@@ -69,7 +69,6 @@ const FarmerForum = () => {
             <header className="page-header">
                 <div>
                     <h1 style={{ fontSize: '2rem', color: 'var(--primary-dark)', margin: 0 }}>Farmer Community</h1>
-                    <p style={{ color: '#718096', margin: '4px 0 0' }}>Share your wisdom, ask questions, and learn from fellow farmers.</p>
                 </div>
                 <button className="btn-primary" onClick={() => setShowPostModal(true)}>
                     <PlusCircle size={20} />

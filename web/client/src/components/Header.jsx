@@ -19,6 +19,15 @@ const Header = ({ onMenuClick }) => {
     const [notifLoading, setNotifLoading] = useState(false);
 
     const userId = localStorage.getItem('userId');
+    
+    // Determine current agricultural season
+    const getSeasonInfo = () => {
+        const month = new Date().getMonth(); // 0-11
+        if (month >= 5 && month <= 9) return { name: 'Kharif', span: 'Jun - Oct' };
+        if (month >= 10 || month <= 1) return { name: 'Rabi', span: 'Nov - Feb' };
+        return { name: 'Zaid', span: 'Mar - May' };
+    };
+    const season = getSeasonInfo();
 
     const fetchNotifications = useCallback(async () => {
         if (!userId) return;
@@ -93,6 +102,16 @@ const Header = ({ onMenuClick }) => {
             </button>
 
             <div className="header-actions">
+                <div className="season-badge-wrapper">
+                    <div className="season-badge">
+                        <span className="season-icon">🌱</span>
+                        <div className="season-text">
+                            <span className="season-name">{season.name}</span>
+                            <span className="season-span">{season.span}</span>
+                        </div>
+                    </div>
+                </div>
+
                 <div className="lang-wrapper">
                     <button 
                         className={`icon-btn ${showLang ? 'active' : ''}`}
@@ -278,6 +297,21 @@ const Header = ({ onMenuClick }) => {
                     align-items: center;
                     gap: 12px;
                 }
+                .season-badge {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 6px 14px;
+                    background: #f0fdf4;
+                    border: 1px solid #dcfce7;
+                    border-radius: 12px;
+                    margin-right: 8px;
+                }
+                .season-icon { font-size: 1.1rem; }
+                .season-text { display: flex; flex-direction: column; line-height: 1; }
+                .season-name { font-size: 0.75rem; font-weight: 800; color: #166534; margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.5px; }
+                .season-span { font-size: 0.65rem; font-weight: 600; color: #15803d; opacity: 0.8; }
+                
                 .lang-wrapper, .notif-wrapper, .profile-wrapper { position: relative; }
                 .lang-code-tag {
                     font-size: 0.65rem;

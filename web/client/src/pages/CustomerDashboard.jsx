@@ -354,7 +354,6 @@ const CustomerDashboard = () => {
             <header className="dashboard-welcome">
                 <div className="welcome-text">
                     <h1>Welcome to Harvest Hub</h1>
-                    <p>Find the freshest produce directly from local farms around you.</p>
                 </div>
                 <div className="search-box" style={{ width: '450px' }}>
                     <Search size={20} color="#718096" />
@@ -435,9 +434,9 @@ const CustomerDashboard = () => {
                                     center={[13.0827, 80.2707]} 
                                     zoom={13} 
                                     style={{ height: '100%', width: '100%' }}
-                                    scrollWheelZoom={false}
+                                    scrollWheelZoom={true}
                                     attributionControl={false}
-                                    zoomControl={false}
+                                    zoomControl={true}
                                 >
                                     <TileLayer
                                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
