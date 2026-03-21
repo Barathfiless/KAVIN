@@ -33,6 +33,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { icon: <LayoutDashboard size={20} />, label: 'Market Feed', path: '/customer/dashboard' },
         { icon: <ShoppingCart size={20} />, label: 'My Orders', path: '/customer/orders' },
         { icon: <Sprout size={20} />, label: 'Favorite Farms', path: '/customer/favorites' },
+        { icon: <Users size={20} />, label: 'Farmer Feed', path: '/customer/community' },
         { icon: <Users size={20} />, label: 'Reviews', path: '/customer/reviews' },
         { icon: <Settings size={20} />, label: 'Preferences', path: '/customer/settings' },
     ];
@@ -46,6 +47,11 @@ const Sidebar = ({ isOpen, onClose }) => {
                     <Sprout size={24} color="#fff" />
                 </div>
                 <h3>{portalMode === 'farmer' ? 'Farmer Central' : 'Harvest Hub'}</h3>
+                {isOpen && (
+                    <button className="mobile-close-btn" onClick={onClose} style={{ marginLeft: 'auto' }}>
+                        <X size={20} />
+                    </button>
+                )}
             </div>
 
             <nav className="sidebar-nav">

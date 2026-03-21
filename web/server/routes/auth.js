@@ -75,4 +75,59 @@ router.get('/user/:id', async (req, res) => {
     }
 });
 
+// Search for farmers by name or phone
+router.get('/search', async (req, res) => {
+    try {
+        const query = req.query.q || '';
+        const users = await User.find({
+            role: 'farmer',
+            $or: [
+                { name: { $regex: query, $options: 'i' } },
+                { phone: { $regex: query, $options: 'i' } }
+            ]
+        }).select('-password');
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ message: 'Search failed' });
+    }
+});
+
+// Follow / Unfollow user
+router.post('/:id/follow', async (req, res) => {
+    try {
+        const targetId = req.params.id;
+        const currentUserId = req.body.currentUserId;
+        
+        if (!currentUserId) return res.status(400).json({ message: 'User ID required' });
+        if (targetId === currentUserId) return res.status(400).json({ message: 'Cannot follow yourself' });
+
+        const targetUser = await User.findById(targetId);
+        const currentUser = await User.findById(currentUserId);
+
+        if (!targetUser || !currentUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const isFollowing = currentUser.following.includes(targetId);
+
+        if (isFollowing) {
+            // Unfollow
+            currentUser.following = currentUser.following.filter(id => id.toString() !== targetId);
+            targetUser.followers = targetUser.followers.filter(id => id.toString() !== currentUserId);
+        } else {
+            // Follow
+            currentUser.following.push(targetId);
+            targetUser.followers.push(currentUserId);
+        }
+
+        await currentUser.save();
+        await targetUser.save();
+
+        res.json({ success: true, isFollowing: !isFollowing });
+    } catch (err) {
+        console.error('Follow error:', err);
+        res.status(500).json({ message: 'Failed to update follow status' });
+    }
+});
+
 module.exports = router;

@@ -6,7 +6,14 @@ const postSchema = new mongoose.Schema({
     title: { type: String, required: true },
     content: { type: String, required: true },
     category: { type: String, default: 'General' },
+    image: { type: String }, // Base64 or URL
+    cropName: { type: String },
+    cropType: { type: String },
+    soilType: { type: String },
+    location: { type: String },
+    price: { type: String },
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    shares: { type: Number, default: 0 },
     commentCount: { type: Number, default: 0 },
 }, { timestamps: true });
 

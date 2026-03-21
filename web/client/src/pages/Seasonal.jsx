@@ -1,7 +1,19 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { CloudSun, MapPin, Wind, Droplets, Thermometer, CheckCircle2, AlertTriangle, Sprout, RefreshCw, Leaf, Info, Search, X, Navigation, ChevronDown, ChevronUp, TrendingUp, ShoppingBag, Sparkles, Map as MapIcon, ArrowRight, Plus, Package } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import VoiceInput from '../components/VoiceInput';
+
+// Fix for default marker icon in Leaflet + React
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
 
 // ─── Comprehensive India Crop Engine ───────────────────────────────────────────
 const CROP_DB = [
@@ -124,23 +136,53 @@ const Seasonal = () => {
     const [isSoilDropdownOpen, setIsSoilDropdownOpen] = useState(false);
     const [selectedAnalysis, setSelectedAnalysis] = useState(null);
     const [analyzingCrop, setAnalyzingCrop] = useState(null);
+    const [mapCenter, setMapCenter] = useState([20.5937, 78.9629]); // India Center
+    const [markerPos, setMarkerPos] = useState(null);
     const debounceRef = useRef(null);
+
+    const MapController = ({ center }) => {
+        const map = useMap();
+        useEffect(() => {
+            if (center) map.setView(center, 13);
+        }, [center, map]);
+        return null;
+    };
+
+    const MapEvents = () => {
+        useMapEvents({
+            click: async (e) => {
+                const { lat, lng } = e.latlng;
+                setMarkerPos([lat, lng]);
+                setMapCenter([lat, lng]);
+                try {
+                    const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=en`);
+                    const data = await res.json();
+                    const label = [data.address?.village || data.address?.town || data.address?.city, data.address?.state].filter(Boolean).join(', ');
+                    fetchWeatherAndAnalyze(lat, lng, label);
+                } catch (err) {
+                    console.error("Reverse geocode failed", err);
+                }
+            }
+        });
+        return null;
+    };
 
     const soilTypes = Object.entries(SOIL_INFO);
 
-    useEffect(() => {
-        fetchMarketDemand();
-    }, []);
-
-    const fetchMarketDemand = async () => {
+    const fetchMarketDemand = useCallback(async (loc = '') => {
         try {
-            const res = await fetch('http://localhost:5000/api/orders/demand/regional');
+            const url = `http://localhost:5000/api/orders/demand/regional${loc ? `?location=${encodeURIComponent(loc)}` : ''}`;
+            const res = await fetch(url);
             const data = await res.json();
             setMarketDemand(data);
         } catch (err) {
             console.error("Failed to fetch demand:", err);
         }
-    };
+    }, []);
+
+    useEffect(() => {
+        fetchMarketDemand(locationName);
+    }, [locationName, fetchMarketDemand]);
 
     const handleSearchInput = (val) => {
         setSearchQuery(val);
@@ -171,13 +213,14 @@ const Seasonal = () => {
     const handleSelectResult = (r) => {
         const lat = parseFloat(r.lat);
         const lon = parseFloat(r.lon);
+        setMapCenter([lat, lon]);
+        setMarkerPos([lat, lon]);
         const label = r.address.city || r.address.town || r.address.village || r.display_name.split(',')[0];
         const fullLabel = `${label}, ${r.address.state}`;
         fetchWeatherAndAnalyze(lat, lon, fullLabel);
     };
 
     const fetchWeatherAndAnalyze = async (lat, lon, locLabel) => {
-        setShowModal(false);
         setLocationName(locLabel);
         setStep('fetching');
         try {
@@ -203,6 +246,8 @@ const Seasonal = () => {
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const { latitude, longitude } = pos.coords;
+                setMapCenter([latitude, longitude]);
+                setMarkerPos([latitude, longitude]);
                 try {
                     const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&accept-language=en`);
                     const data = await res.json();
@@ -278,7 +323,21 @@ const Seasonal = () => {
                             <div className="loc-search-wrap">
                                 <Search size={16} className="loc-search-icon" />
                                 <input className="loc-search-input" type="text" placeholder="e.g. Coimbatore, Tamil Nadu…" value={searchQuery} onChange={(e) => handleSearchInput(e.target.value)} autoFocus />
+                                <div className="voice-search-trigger" style={{ marginLeft: '10px' }}>
+                                    <VoiceInput onResult={handleSearchInput} placeholder="Say city name..." />
+                                </div>
                             </div>
+
+                            <div className="loc-map-wrapper">
+                                <div className="map-instruction">Or click on map to set location:</div>
+                                <MapContainer center={mapCenter} zoom={5} className="loc-map-container" zoomControl={false}>
+                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
+                                    <MapController center={mapCenter} />
+                                    <MapEvents />
+                                    {markerPos && <Marker position={markerPos} />}
+                                </MapContainer>
+                            </div>
+
                             <div className="loc-results">
                                 {searchStatus === 'done' && searchResults.map((r, i) => (
                                     <button key={i} className="loc-result-item" onClick={() => handleSelectResult(r)}>
@@ -289,6 +348,12 @@ const Seasonal = () => {
                                         </div>
                                     </button>
                                 ))}
+                            </div>
+                            
+                            <div className="loc-modal-footer-btn">
+                                <button className="confirm-loc-btn" onClick={() => setShowModal(false)} disabled={!locationName}>
+                                    Confirm {locationName ? `Location: ${locationName}` : 'Selection'}
+                                </button>
                             </div>
                         </motion.div>
                     </motion.div>
@@ -373,7 +438,7 @@ const Seasonal = () => {
                     {activeTab === 'advisor' ? (
                         <>
                             {step === 'done' && recommendations.length > 0 ? (() => {
-                                const hasDemand = recommendations.some(crop => marketDemand.some(d => d.crop.toLowerCase() === crop.name.toLowerCase()));
+                                const hasDemand = marketDemand.length > 0;
                                 return (
                                     <motion.div 
                                         className={`advisor-results-split ${!hasDemand ? 'no-demand' : ''}`} 
@@ -387,21 +452,35 @@ const Seasonal = () => {
                                                 <h3 className="section-title"><TrendingUp size={18} style={{ color: '#e53e3e' }} /> High Market Demand</h3>
                                             </div>
                                             <div className="crop-results-scroll">
-                                                {recommendations
-                                                    .filter(crop => marketDemand.some(d => d.crop.toLowerCase() === crop.name.toLowerCase()))
-                                                    .map((crop, i) => (
-                                                        <div key={crop.name + '-demand'} className="crop-row-card demand-highlight-card">
+                                                {marketDemand.map((d, i) => {
+                                                    const recMatch = recommendations.find(r => r.name.toLowerCase().trim() === d.crop.toLowerCase().trim());
+                                                    const dbMatch = CROP_DB.find(c => c.name.toLowerCase().trim() === d.crop.toLowerCase().trim());
+                                                    
+                                                    const crop = recMatch || (dbMatch ? {
+                                                        ...dbMatch,
+                                                        score: 0,
+                                                        tier: 'Out of Season'
+                                                    } : {
+                                                        name: d.crop,
+                                                        score: 0,
+                                                        tier: 'Unknown',
+                                                        waterNeeds: 'Unknown',
+                                                        duration: 'Unknown'
+                                                    });
+
+                                                    return (
+                                                        <div key={crop.name + '-demand-idx-' + i} className="crop-row-card demand-highlight-card">
                                                             <div className="crop-row-rank">{i + 1}</div>
                                                             <div className="crop-row-info">
                                                                 <div className="crop-row-name-row">
                                                                     <div className="crop-row-name">{crop.name}</div>
-                                                                    <span className={`tier-badge tier-${crop.tier?.toLowerCase()}`}>{crop.tier}</span>
+                                                                    <span className={`tier-badge tier-${crop.tier?.toLowerCase().replace(/\s+/g, '-')}`}>{crop.tier}</span>
                                                                     <span className="hot-badge"><TrendingUp size={10} /> High Demand</span>
                                                                 </div>
                                                                 <div className="crop-row-meta"><span>{crop.waterNeeds} Water</span><span className="dot"></span><span>{crop.duration}</span></div>
                                                             </div>
                                                             <div className="crop-row-score">
-                                                                <div className="score-label">{crop.score}% Match</div>
+                                                                <div className="score-label">{crop.score > 0 ? `${crop.score}% Match` : 'Not Recommended'}</div>
                                                                 <div className="score-bar-mini">
                                                                     <div className="score-fill-mini" style={{ width: `${crop.score}%`, background: crop.tier === 'Excellent' ? '#2f855a' : crop.tier === 'Good' ? '#d69e2e' : '#dd6b20' }}></div>
                                                                 </div>
@@ -413,8 +492,8 @@ const Seasonal = () => {
                                                                 </button>
                                                             </div>
                                                         </div>
-                                                    ))
-                                                }
+                                                    );
+                                                })}
                                             </div>
                                         </section>
                                     )}
@@ -457,7 +536,16 @@ const Seasonal = () => {
                                     </section>
                                 </motion.div>
                             );
-                        })() : null}
+                        })() : step === 'done' ? (
+                            <motion.div className="results-empty-centered" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                                <AlertTriangle size={48} className="idle-icon" style={{ color: '#fb923c' }} />
+                                <h3>No Optimal Crops Found</h3>
+                                <p>Based on your current climate ({weather?.temperature_2m}°C) and the selected <strong>{SOIL_INFO[soilType].name}</strong>, no optimal crops met the minimum growth criteria for the <strong>{season}</strong> season.</p>
+                                <button className="go-btn" style={{ maxWidth: '200px', margin: '20px auto 0' }} onClick={() => setIsSoilDropdownOpen(true)}>
+                                    Change Soil Type
+                                </button>
+                            </motion.div>
+                        ) : null}
                         </>
                     ) : (
                         <motion.section className="section-block demand-section" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -489,7 +577,7 @@ const Seasonal = () => {
                                         </div>
                                     </div>
                                 )) : (
-                                    <div className="results-empty-centered">
+                                    <div className="results-empty-centered" style={{ gridColumn: '1 / -1', minHeight: '300px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: '#f8fafc', borderRadius: '16px', border: '1px dashed #cbd5e1' }}>
                                         <ShoppingBag size={48} className="idle-icon" />
                                         <h3>No Demand Data Yet</h3>
                                         <p>Market demand will appear here once customers start placing orders.</p>
@@ -542,7 +630,7 @@ const Seasonal = () => {
             </div>
 
             <style>{`
-                .seasonal-page { display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px; }
+                .seasonal-page { display: flex; flex-direction: column; gap: 24px; padding-bottom: 40px; margin-top: -20px; }
                 .seasonal-top-controls { 
                     display: flex; 
                     align-items: center; 
@@ -553,10 +641,57 @@ const Seasonal = () => {
                     border: 1px solid #edf2f7;
                     box-shadow: 0 4px 20px rgba(0,0,0,0.04);
                     position: sticky;
-                    top: 75px;
+                    top: 85px;
                     z-index: 80;
                     background: #ffffff;
                     box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+                }
+
+                @media (max-width: 900px) {
+                    .seasonal-top-controls { 
+                        flex-direction: column; 
+                        gap: 16px; 
+                        align-items: stretch;
+                        top: 70px;
+                        padding: 16px;
+                        border-radius: 16px;
+                    }
+                    .header-climate-status {
+                        border-left: none;
+                        border-top: 1px solid #edf2f7;
+                        padding: 16px 0 0;
+                        margin: 0;
+                        justify-content: space-between;
+                        height: auto;
+                    }
+                    .h-temp { font-size: 1.4rem; text-align: left; }
+                    .h-loc-box { justify-content: flex-start; }
+                    .h-climate-details { align-items: flex-end; }
+                    .custom-dropdown-container { width: 100%; }
+                    .horizontal-control-block { flex-direction: column; align-items: stretch; }
+                }
+
+                @media (max-width: 600px) {
+                    .seasonal-layout { flex-direction: column; }
+                    .seasonal-content { padding: 0; }
+                    .section-block { padding: 16px; border-radius: 12px; }
+                    .crop-row-card { 
+                        display: flex !important; 
+                        flex-direction: column !important; 
+                        gap: 12px; 
+                        padding: 16px; 
+                        align-items: stretch !important;
+                        border-bottom: 1.5px solid #f1f5f9;
+                    }
+                    .crop-row-rank { display: none; }
+                    .crop-row-info { width: 100%; }
+                    .crop-row-name-row { gap: 10px; margin-bottom: 8px; justify-content: space-between; }
+                    .crop-row-score { text-align: left; width: 100%; margin: 4px 0 8px; }
+                    .score-bar-mini { height: 6px; }
+                    .crop-row-actions { width: 100%; justify-content: stretch; gap: 10px; display: flex !important; }
+                    .ai-insight-btn { flex: 1; height: 44px; font-size: 0.85rem; }
+                    .ai-insight-btn.secondary { width: 44px; flex: 0 0 44px; height: 44px; }
+                    .results-header { padding-bottom: 12px; margin-bottom: 12px; }
                 }
                 
                 .horizontal-control-block { display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
@@ -636,7 +771,14 @@ const Seasonal = () => {
                 .demand-footer { border-top: 1px solid #f1f5f9; padding-top: 15px; }
                 .go-btn { width: 100%; padding: 10px; border-radius: 10px; border: none; background: #f0fff4; color: #2d6a4f; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
                 .go-btn:hover { background: #2d6a4f; color: white; }
-                .advisor-results-split { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; align-items: stretch; max-width: 1550px; margin: 0 auto; width: 100%; }
+                .advisor-results-split { 
+                    display: grid; 
+                    grid-template-columns: 1fr 1fr; 
+                    gap: 24px; 
+                    align-items: stretch; 
+                    max-width: 100%; 
+                    width: 100%; 
+                }
                 .advisor-results-split.no-demand { grid-template-columns: 1fr; max-width: 850px; margin: 0 auto; width: 100%; }
                 
                 @media (max-width: 1450px) {
@@ -686,6 +828,7 @@ const Seasonal = () => {
                 .tier-excellent { background: #dcfce7; color: #166534; }
                 .tier-good { background: #fef9c3; color: #854d0e; }
                 .tier-fair { background: #ffedd5; color: #9a3412; }
+                .tier-out-of-season, .tier-unknown { background: #f1f5f9; color: #64748b; }
                 .crop-row-meta { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #64748b; white-space: nowrap; overflow: hidden; }
                 .dot { width: 3px; height: 3px; background: #cbd5e1; border-radius: 50%; flex-shrink: 0; }
                 .crop-row-score { text-align: right; }
@@ -705,6 +848,16 @@ const Seasonal = () => {
                 .ai-insight-btn:disabled { opacity: 0.6; cursor: not-allowed; }
                 .ai-insight-btn.secondary { background: transparent; border: 1px solid #e2e8f0; color: #475569; width: 32px; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; }
                 .ai-insight-btn.secondary:hover { background: #eff6ff; color: #3b82f6; border-color: #3b82f6; }
+
+                /* Map Styling */
+                .loc-modal { width: 600px !important; }
+                .loc-map-wrapper { margin: 16px 0; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0; position: relative; }
+                .map-instruction { position: absolute; top: 10px; left: 10px; z-index: 1000; background: white; padding: 4px 10px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; color: var(--primary-dark); box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; pointer-events: none; }
+                .loc-map-container { height: 250px; width: 100%; z-index: 10; }
+                .loc-modal-footer-btn { padding-top: 20px; border-top: 1px solid #f1f5f9; margin-top: 10px; }
+                .confirm-loc-btn { width: 100%; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 12px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+                .confirm-loc-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+                .confirm-loc-btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
 
                 .results-panel { min-height: 400px; }
                 .results-empty-centered {

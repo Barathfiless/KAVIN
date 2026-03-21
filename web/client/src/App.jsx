@@ -65,6 +65,7 @@ function App() {
             <Route path="/customer/orders" element={<SessionProtector requiredRole="customer"><Orders /></SessionProtector>} />
             <Route path="/customer/favorites" element={<SessionProtector requiredRole="customer"><FavoriteFarms /></SessionProtector>} />
             <Route path="/customer/reviews" element={<SessionProtector requiredRole="customer"><Reviews /></SessionProtector>} />
+            <Route path="/customer/community" element={<SessionProtector requiredRole="customer"><FarmerForum /></SessionProtector>} />
             
             <Route path="/farmer/settings" element={<SessionProtector requiredRole="farmer"><Settings /></SessionProtector>} />
             <Route path="/customer/settings" element={<SessionProtector requiredRole="customer"><Settings /></SessionProtector>} />
