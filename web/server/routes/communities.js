@@ -41,7 +41,10 @@ router.get('/joined/:userId', async (req, res) => {
 
 // Create new broadcast community (farmer only)
 router.post('/create', async (req, res) => {
-    const { name, description, adminId, adminName } = req.body;
+    const { name, description, adminId, adminName, settings } = req.body;
+    
+    console.log('Create community request:', { name, description, adminId, adminName, settings });
+    
     try {
         const newCommunity = new Community({
             name,
@@ -49,16 +52,22 @@ router.post('/create', async (req, res) => {
             type: 'broadcast',
             admins: [adminId],
             members: [adminId],
+            settings: settings || { allowMemberMessages: false },
             lastMessage: {
                 text: `Welcome to ${name}!`,
                 senderName: 'System',
                 timestamp: new Date()
             }
         });
+        
+        console.log('Attempting to save community...');
         const saved = await newCommunity.save();
+        console.log('Community saved successfully:', saved.communityId);
+        
         res.status(201).json(saved);
     } catch (err) {
-        res.status(400).json({ message: err.message });
+        console.error('Error creating community:', err);
+        res.status(400).json({ message: err.message, error: err.toString() });
     }
 });
 
@@ -68,7 +77,7 @@ router.post('/:id/join', async (req, res) => {
         const community = await Community.findById(req.params.id);
         if (!community) return res.status(404).json({ message: 'Community not found' });
 
-        if (!community.members.includes(req.body.userId)) {
+        if (!community.members.map(String).includes(String(req.body.userId))) {
             community.members.push(req.body.userId);
             await community.save();
         }
@@ -95,11 +104,28 @@ router.get('/:id/announcements', async (req, res) => {
 router.post('/:id/announce', async (req, res) => {
     const { sender, senderName, senderRole, text, image } = req.body;
     try {
-        // Verify sender is admin
+        // Verify sender is admin OR everyone can post
         const community = await Community.findById(req.params.id);
         if (!community) return res.status(404).json({ message: 'Community not found' });
-        if (!community.admins.map(String).includes(String(sender))) {
-            return res.status(403).json({ message: 'Only admins can post announcements' });
+        
+        // Universal grant for farmers in broadcast communities
+        const user = await User.findById(sender).catch(err => null);
+        const roleFromDB = user?.role?.toLowerCase();
+        const roleFromBody = senderRole?.toLowerCase();
+        
+        const isOfficialAdmin = community.admins.map(String).includes(String(sender));
+        const isFarmer = roleFromDB === 'farmer' || roleFromBody === 'farmer';
+        const isAdmin = isOfficialAdmin || isFarmer;
+        
+        console.log('--- Broadcast Permission Check ---');
+        console.log('User:', senderName, 'ID:', String(sender));
+        console.log('Roles - DB:', roleFromDB, 'Body:', roleFromBody);
+        console.log('isOfficialAdmin:', isOfficialAdmin, 'isFarmer:', isFarmer);
+        console.log('Final isAdmin:', isAdmin);
+        console.log('---------------------------------');
+
+        if (!isAdmin) {
+            return res.status(403).json({ message: 'Only admins can post in this community' });
         }
 
         const newMsg = new Message({
@@ -181,6 +207,24 @@ router.get('/users/search', async (req, res) => {
     }
 });
 
+// Search community by ID
+router.get('/search-by-id/:communityId', async (req, res) => {
+    try {
+        const community = await Community.findOne({ 
+            communityId: req.params.communityId.toUpperCase(),
+            type: 'broadcast'
+        });
+        
+        if (!community) {
+            return res.status(404).json({ message: 'Community not found' });
+        }
+        
+        res.json(community);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 // Start or get direct chat
 router.post('/direct', async (req, res) => {
     const { userId, targetUserId, userName, targetUserName } = req.body;
@@ -250,6 +294,41 @@ router.post('/:id/send', async (req, res) => {
         res.status(201).json(saved);
     } catch (err) {
         res.status(400).json({ message: err.message });
+    }
+});
+
+// Delete a community (admin only)
+router.delete('/:id', async (req, res) => {
+    const { userId } = req.query; // Get userId from query params
+    try {
+        const community = await Community.findById(req.params.id);
+        if (!community) return res.status(404).json({ message: 'Community not found' });
+        
+        // Verify user exists and has the correct role for broadcast deletion
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ message: 'User not found' });
+
+        // Check if user is admin
+        const isAdmin = community.admins.map(String).includes(String(userId)) || user.role === 'farmer';
+        if (!isAdmin) {
+            return res.status(403).json({ message: 'Only admins can delete this community' });
+        }
+
+        // For broadcast communities, additional role check
+        if (community.type === 'broadcast' && user.role !== 'farmer') {
+            return res.status(403).json({ message: 'Only farmers can delete broadcast communities' });
+        }
+
+        // Delete associated messages
+        await Message.deleteMany({ community: req.params.id });
+        
+        // Delete the community
+        await Community.findByIdAndDelete(req.params.id);
+        
+        res.json({ message: 'Community deleted successfully' });
+    } catch (err) {
+        console.error('Delete error:', err);
+        res.status(500).json({ message: err.message });
     }
 });
 
