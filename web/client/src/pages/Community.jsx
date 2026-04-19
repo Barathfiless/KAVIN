@@ -391,13 +391,17 @@ const Community = () => {
             <div className="page-header">
 
                 <div className="tab-pills">
-                    {['Communities', 'Chats', 'Discover'].map(tab => (
+                    {[
+                        { id: 'Communities', label: portalMode === 'farmer' ? 'Farmer' : 'Customer' },
+                        { id: 'Chats', label: 'Chats' },
+                        { id: 'Discover', label: 'Discover' }
+                    ].map(tab => (
                         <button 
-                            key={tab} 
-                            className={`pill-btn ${activeTab === tab ? 'active' : ''}`}
-                            onClick={() => { setActiveTab(tab); setSelectedHub(null); }}
+                            key={tab.id} 
+                            className={`pill-btn ${activeTab === tab.id ? 'active' : ''}`}
+                            onClick={() => { setActiveTab(tab.id); setSelectedHub(null); }}
                         >
-                            {tab}
+                            {tab.label}
                         </button>
                     ))}
                 </div>
