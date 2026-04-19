@@ -54,6 +54,8 @@ export const translations = {
         marketInsights: "Market Insights",
         accountProfile: "Account Profile",
         editProfile: "Edit Profile",
+        community: "Community",
+        socialFeed: "Social Feed",
     },
     hi: {
         welcomeBack: "वापसी पर स्वागत है",
@@ -107,6 +109,8 @@ export const translations = {
         marketInsights: "बाजार की जानकारी",
         accountProfile: "खाता प्रोफ़ाइल",
         editProfile: "प्रोफ़ाइल संपादित करें",
+        community: "समुदाय",
+        socialFeed: "सोशल फ़ीड",
     },
     ta: {
         welcomeBack: "மீண்டும் வருக",
@@ -162,6 +166,8 @@ export const translations = {
         marketInsights: "சந்தை நுண்ணறிவு",
         accountProfile: "கணக்கு சுயவிவரம்",
         editProfile: "சுயவிவரத்தை திருத்துங்கள்",
+        community: "சமூகம்",
+        socialFeed: "சமூக ஊடகம்",
     },
     te: {
         welcomeBack: "తిరిగి స్వాగతం",

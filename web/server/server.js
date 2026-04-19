@@ -31,6 +31,8 @@ const reviewRoutes = require('./routes/reviews');
 const forumRoutes = require('./routes/forums');
 const aiRoutes = require('./routes/ai'); // Import AI routes
 const energyRoutes = require('./routes/energy'); // Energy logic
+const communityRoutes = require('./routes/communities'); // Community Chat
+
 app.use('/api/auth', authRoutes);
 app.use('/api/crops', cropRoutes);
 app.use('/api/notifications', notificationRoutes);
@@ -40,6 +42,7 @@ app.use('/api/reviews', reviewRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/ai', aiRoutes); // Mount AI routes
 app.use('/api/energy', energyRoutes); // Mount Energy Planner routes
+app.use('/api/communities', communityRoutes); // Mount Community routes
 
 app.get('/', (req, res) => {
     res.send('Farmer Platform API is running');

@@ -62,7 +62,13 @@ const AIChatAssistant = () => {
     };
 
     return (
-        <div className="ai-assistant-wrapper">
+        <motion.div 
+            drag
+            dragConstraints={{ left: -window.innerWidth + 100, right: 0, top: -window.innerHeight + 100, bottom: 0 }}
+            dragMomentum={false}
+            className="ai-assistant-wrapper"
+            style={{ position: 'fixed', bottom: '30px', right: '30px', zIndex: 10000 }}
+        >
             {/* Toggle Button */}
             <motion.button 
                 whileHover={{ scale: 1.1 }}
@@ -131,7 +137,6 @@ const AIChatAssistant = () => {
             </AnimatePresence>
 
             <style>{`
-                .ai-assistant-wrapper { position: fixed; bottom: 30px; right: 30px; z-index: 10000; }
                 .ai-toggle-btn { 
                     width: 60px; height: 60px; border-radius: 20px; 
                     background: linear-gradient(135deg, #10b981, #059669); color: white;
@@ -187,7 +192,7 @@ const AIChatAssistant = () => {
                 .spin-icon { animation: spin 1s linear infinite; }
                 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
             `}</style>
-        </div>
+        </motion.div>
     );
 };
 

@@ -14,6 +14,7 @@ import FavoriteFarms from './pages/FavoriteFarms'
 import Reviews from './pages/Reviews'
 import FarmerOrders from './pages/FarmerOrders'
 import EnergyPlanner from './pages/EnergyPlanner'
+import Community from './pages/Community'
 import { LanguageProvider } from './context/LanguageContext'
 
 const TabRedirect = ({ element }) => {
@@ -57,7 +58,7 @@ function App() {
             <Route path="/farmer/crops" element={<SessionProtector requiredRole="farmer"><Crops /></SessionProtector>} />
             <Route path="/farmer/listings" element={<SessionProtector requiredRole="farmer"><MyListings /></SessionProtector>} />
             <Route path="/farmer/orders" element={<SessionProtector requiredRole="farmer"><FarmerOrders /></SessionProtector>} />
-            <Route path="/farmer/community" element={<SessionProtector requiredRole="farmer"><FarmerForum /></SessionProtector>} />
+            <Route path="/farmer/community" element={<SessionProtector requiredRole="farmer"><Community /></SessionProtector>} />
             <Route path="/farmer/seasonal" element={<SessionProtector requiredRole="farmer"><Seasonal /></SessionProtector>} />
             <Route path="/farmer/planner" element={<SessionProtector requiredRole="farmer"><EnergyPlanner /></SessionProtector>} />
             
@@ -65,7 +66,7 @@ function App() {
             <Route path="/customer/orders" element={<SessionProtector requiredRole="customer"><Orders /></SessionProtector>} />
             <Route path="/customer/favorites" element={<SessionProtector requiredRole="customer"><FavoriteFarms /></SessionProtector>} />
             <Route path="/customer/reviews" element={<SessionProtector requiredRole="customer"><Reviews /></SessionProtector>} />
-            <Route path="/customer/community" element={<SessionProtector requiredRole="customer"><FarmerForum /></SessionProtector>} />
+            <Route path="/customer/community" element={<SessionProtector requiredRole="customer"><Community /></SessionProtector>} />
             
             <Route path="/farmer/settings" element={<SessionProtector requiredRole="farmer"><Settings /></SessionProtector>} />
             <Route path="/customer/settings" element={<SessionProtector requiredRole="customer"><Settings /></SessionProtector>} />

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Users, Sprout, ShoppingCart, Settings, LogOut, ChevronRight, CloudSun, Tag, Package, Zap, X } from 'lucide-react';
+import { LayoutDashboard, Users, Sprout, ShoppingCart, Settings, LogOut, ChevronRight, CloudSun, Tag, Package, Zap, X, MessageSquare } from 'lucide-react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '../context/LanguageContext';
 
@@ -25,6 +25,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { icon: <Sprout size={20} />, label: t.cropManagement || 'Inventory Management', path: '/farmer/crops' },
         { icon: <Tag size={20} />, label: 'My Listings', path: '/farmer/listings' },
         { icon: <Package size={20} />, label: 'Incoming Orders', path: '/farmer/orders' },
+        { icon: <MessageSquare size={20} />, label: 'Community | Chats', path: '/farmer/community' },
         { icon: <Settings size={20} />, label: t.settings, path: '/farmer/settings' },
     ];
 
@@ -33,6 +34,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         { icon: <ShoppingCart size={20} />, label: 'My Orders', path: '/customer/orders' },
         { icon: <Sprout size={20} />, label: 'Favorite Farms', path: '/customer/favorites' },
         { icon: <Users size={20} />, label: 'Reviews', path: '/customer/reviews' },
+        { icon: <MessageSquare size={20} />, label: 'Community | Chats', path: '/customer/community' },
         { icon: <Settings size={20} />, label: 'Preferences', path: '/customer/settings' },
     ];
 
